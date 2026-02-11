@@ -12,37 +12,76 @@ const gamePanel = document.getElementById('gamePanel');
 const bonusArea = document.getElementById('bonusRoundArea');
 const callArea = document.getElementById('callRoundArea');
 const roundTypeTitle = document.getElementById('roundTypeTitle');
-const scoreTableBody = document.getElementById('scoreTable');
+const scoreTableBody = document.getElementById('scoreTableBody');
 const nameFieldsContainer = document.getElementById('nameFieldsContainer');
+const leaderboardModal = document.getElementById('leaderboardModal');
 
-// ----- ইউটিলিটি -----
+// ----- ইউটিলিটি ফাংশন -----
 function createNameFields() {
   const count = parseInt(document.getElementById('playerCountInput').value, 10);
   if (isNaN(count) || count < 2 || count > 6) {
-    alert('২ থেকে ৬ জন খেলোয়াড় দিন');
+    showNotification('২ থেকে ৬ জন খেলোয়াড় দিন', 'error');
     return;
   }
+  
   let html = '';
   for (let i = 0; i < count; i++) {
-    html += `<input type="text" id="playerName${i}" placeholder="খেলোয়াড় ${i+1} এর নাম" value="P${i+1}" style="margin-bottom: 8px;">`;
+    html += `<input type="text" id="playerName${i}" placeholder="খেলোয়াড় ${i+1} এর নাম" value="" style="margin-bottom: 8px;">`;
   }
   nameFieldsContainer.innerHTML = html;
+}
+
+// ----- নোটিফিকেশন -----
+function showNotification(message, type = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${type === 'error' ? '#f44336' : '#4CAF50'};
+    color: white;
+    padding: 15px 25px;
+    border-radius: 50px;
+    box-shadow: 0 8px 0 ${type === 'error' ? '#962d2d' : '#2d6e2d'};
+    z-index: 2000;
+    animation: slideIn 0.3s ease;
+    font-weight: 600;
+  `;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
 }
 
 // ----- বোনাস রাউন্ড শুরু -----
 function startBonusRound() {
   const count = parseInt(document.getElementById('playerCountInput').value, 10);
   if (isNaN(count) || count < 2 || count > 6) {
-    alert('প্রথমে বৈধ প্লেয়ার সংখ্যা দিন ও নাম ফিল্ড তৈরি করুন');
+    showNotification('প্রথমে বৈধ প্লেয়ার সংখ্যা দিন', 'error');
     return;
   }
   
+  // প্লেয়ার নাম সংগ্রহ
   players = [];
+  let hasEmptyName = false;
+  
   for (let i = 0; i < count; i++) {
     let nameField = document.getElementById(`playerName${i}`);
     let name = nameField ? nameField.value.trim() : '';
-    if (name === '') name = `P${i+1}`;
+    
+    if (name === '') {
+      hasEmptyName = true;
+      name = `প্লেয়ার ${i+1}`;
+    }
     players.push(name);
+  }
+  
+  if (hasEmptyName) {
+    showNotification('কিছু নাম ফাঁকা ছিল, অটো নাম দেওয়া হয়েছে', 'info');
   }
   
   totalScores = new Array(players.length).fill(0);
@@ -53,9 +92,10 @@ function startBonusRound() {
   
   showBonusRoundUI();
   updateScoreTable();
+  showNotification('বোনাস রাউন্ড শুরু!', 'success');
 }
 
-// ----- বোনাস রাউন্ড UI লোড -----
+// ----- বোনাস রাউন্ড UI -----
 function showBonusRoundUI() {
   bonusArea.style.display = 'block';
   callArea.style.display = 'none';
@@ -69,9 +109,9 @@ function showBonusRoundUI() {
     card.className = 'bonus-player-card';
     card.innerHTML = `
       <h4>${player}</h4>
-      <div style="display: flex; justify-content: center; gap: 10px;">
-        <label style="font-weight:700;">উঠেছে</label>
-        <input type="number" id="bonusGot${idx}" min="0" value="0" style="width: 90px; text-align: center; padding: 12px; border-radius: 60px;">
+      <div class="input-pair">
+        <label>🎯 উঠেছে</label>
+        <input type="number" id="bonusGot${idx}" min="0" value="0" step="1" placeholder="০">
       </div>
     `;
     bonusGrid.appendChild(card);
@@ -96,6 +136,7 @@ function submitBonusRound() {
   loadCallRoundInputs();
   updateScoreTable();
   saveGameToLocal();
+  showNotification('বোনাস রাউন্ড জমা হয়েছে!', 'success');
 }
 
 // ----- কল রাউন্ড ইনপুট লোড -----
@@ -110,19 +151,30 @@ function loadCallRoundInputs() {
       <h4>🌪️ ${player}</h4>
       <div class="input-pair">
         <label>📞 কল</label>
-        <input type="number" id="call${idx}" min="0" value="0" step="1">
+        <input type="number" id="call${idx}" min="0" value="" step="1" placeholder="০">
       </div>
       <div class="input-pair">
         <label>🎯 উঠেছে</label>
-        <input type="number" id="got${idx}" min="0" value="0" step="1">
+        <input type="number" id="got${idx}" min="0" value="" step="1" placeholder="০">
       </div>
       <small style="color: #145c66;">৪→৫ = ৪.১ // ৫→৪ = -৫</small>
     `;
     callGrid.appendChild(card);
+    
+    // ফোকাস এনিমেশন
+    const inputs = card.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'scale(1.02)';
+      });
+      input.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'scale(1)';
+      });
+    });
   });
 }
 
-// ----- ফ্রাকশনাল স্কোর ক্যালকুলেশন -----
+// ----- স্কোর ক্যালকুলেশন -----
 function computeCallScore(call, got) {
   call = parseInt(call, 10) || 0;
   got = parseInt(got, 10) || 0;
@@ -141,6 +193,20 @@ function computeCallScore(call, got) {
 function submitCallRound() {
   if (!players.length) return;
   
+  // সব ফিল্ড চেক করা
+  let allFilled = true;
+  players.forEach((_, i) => {
+    const callInput = document.getElementById(`call${i}`);
+    const gotInput = document.getElementById(`got${i}`);
+    if (!callInput?.value && !gotInput?.value) {
+      allFilled = false;
+    }
+  });
+  
+  if (!allFilled) {
+    showNotification('ফাঁকা ফিল্ড ০ ধরে নেওয়া হয়েছে', 'info');
+  }
+  
   players.forEach((_, i) => {
     const callInput = document.getElementById(`call${i}`);
     const gotInput = document.getElementById(`got${i}`);
@@ -156,39 +222,134 @@ function submitCallRound() {
   loadCallRoundInputs();
   updateScoreTable();
   saveGameToLocal();
+  showNotification(`রাউন্ড ${currentRound-1} জমা হয়েছে!`, 'success');
 }
 
 // ----- স্কোর টেবিল আপডেট -----
 function updateScoreTable() {
-  let html = `<tr><th>খেলোয়াড়</th><th>মোট পয়েন্ট</th></tr>`;
+  let html = '';
   
-  players.forEach((p, i) => {
-    let scoreFixed = totalScores[i].toFixed(1);
-    html += `<tr id="scoreRow${i}"><td>${p}</td><td>${scoreFixed}</td></tr>`;
+  // সাজানো অ্যারে
+  const sortedPlayers = players.map((player, index) => ({
+    name: player,
+    score: totalScores[index],
+    index
+  })).sort((a, b) => b.score - a.score);
+  
+  sortedPlayers.forEach((player, pos) => {
+    let scoreFixed = player.score.toFixed(1);
+    let medal = '';
+    if (pos === 0) medal = '🥇 ';
+    else if (pos === 1) medal = '🥈 ';
+    else if (pos === 2) medal = '🥉 ';
+    
+    html += `<tr id="scoreRow${player.index}" class="${pos === 0 ? 'leader-row' : ''}">
+              <td>${medal} ${player.name}</td>
+              <td>${scoreFixed}</td>
+            </tr>`;
   });
   
-  scoreTableBody.innerHTML = html;
+  if (scoreTableBody) {
+    scoreTableBody.innerHTML = html;
+  }
 }
 
-// ----- গেম শেষ -----
+// ----- গেম শেষ ও লিডারবোর্ড -----
 function endGame() {
   if (!players.length) return;
   
-  let maxScore = Math.max(...totalScores);
+  showLeaderboard();
+  saveGameToLocal();
+}
+
+// ----- লিডারবোর্ড দেখান -----
+function showLeaderboard() {
+  if (!players.length) return;
   
-  players.forEach((_, i) => {
-    const row = document.getElementById(`scoreRow${i}`);
-    if (row) {
-      if (totalScores[i] === maxScore) {
-        row.classList.add('winner-row');
-      } else {
-        row.classList.remove('winner-row');
-      }
-    }
+  // স্কোর অনুযায়ী সাজানো
+  const sortedPlayers = players.map((player, index) => ({
+    name: player,
+    score: totalScores[index],
+    index
+  })).sort((a, b) => b.score - a.score);
+  
+  const podiumContainer = document.getElementById('leaderboardPodium');
+  const leaderboardList = document.getElementById('leaderboardList');
+  
+  // পোডিয়াম তৈরি
+  podiumContainer.innerHTML = '';
+  for (let i = 0; i < Math.min(3, sortedPlayers.length); i++) {
+    const player = sortedPlayers[i];
+    const podiumItem = document.createElement('div');
+    podiumItem.className = 'podium-item';
+    
+    let medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
+    let colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+    
+    podiumItem.innerHTML = `
+      <div class="podium-rank" style="background: ${colors[i]};">${medal}</div>
+      <div class="podium-name">${player.name}</div>
+      <div class="podium-score">${player.score.toFixed(1)} পয়েন্ট</div>
+    `;
+    podiumContainer.appendChild(podiumItem);
+  }
+  
+  // সম্পূর্ণ লিডারবোর্ড
+  leaderboardList.innerHTML = '<h3 style="margin-bottom: 20px;">📋 সম্পূর্ণ স্কোরবোর্ড</h3>';
+  
+  sortedPlayers.forEach((player, index) => {
+    const item = document.createElement('div');
+    item.className = 'leaderboard-item';
+    item.style.animationDelay = `${index * 0.1}s`;
+    
+    let medal = '';
+    if (index === 0) medal = '🏆';
+    else if (index === 1) medal = '🥈';
+    else if (index === 2) medal = '🥉';
+    else medal = `${index + 1}`;
+    
+    item.innerHTML = `
+      <div class="leaderboard-rank" style="background: ${index < 3 ? ['#FFD700', '#C0C0C0', '#CD7F32'][index] : '#0e6b7a'}">
+        ${medal}
+      </div>
+      <div class="leaderboard-info">
+        <span class="leaderboard-name">${player.name}</span>
+        <span class="leaderboard-score">${player.score.toFixed(1)}</span>
+      </div>
+    `;
+    leaderboardList.appendChild(item);
   });
   
-  alert(`🏆 খেলা শেষ! সর্বোচ্চ স্কোর: ${maxScore.toFixed(1)} 🏆`);
+  // মডাল দেখান
+  leaderboardModal.style.display = 'flex';
+}
+
+// ----- লিডারবোর্ড বন্ধ -----
+function closeLeaderboard() {
+  leaderboardModal.style.display = 'none';
+}
+
+// ----- নতুন গেম শুরু -----
+function newGame() {
+  // স্টেট রিসেট
+  players = [];
+  totalScores = [];
+  currentRound = 1;
+  gameActive = false;
+  
+  // লোকাল স্টোরেজ ক্লিয়ার
   localStorage.removeItem('breezeStormState');
+  
+  // UI রিসেট
+  leaderboardModal.style.display = 'none';
+  gamePanel.style.display = 'none';
+  setupPanel.style.display = 'block';
+  
+  // প্লেয়ার কাউন্ট রিসেট
+  document.getElementById('playerCountInput').value = 4;
+  createNameFields();
+  
+  showNotification('নতুন গেম শুরু! খেলোয়াড় সেটআপ করুন', 'success');
 }
 
 // ----- লোকাল স্টোরেজ সেভ -----
@@ -201,17 +362,8 @@ function saveGameToLocal() {
   localStorage.setItem('breezeStormState', JSON.stringify(state));
 }
 
-// ----- উইন্ডো লোড -----
-window.onload = function() {
-  document.getElementById('playerCountInput').value = 4;
-  createNameFields();
-  
-  let nameFields = ['জাহিন', 'রাইসা', 'তানভীর', 'নুশরাত'];
-  for (let i = 0; i < nameFields.length; i++) {
-    let fld = document.getElementById(`playerName${i}`);
-    if (fld) fld.value = nameFields[i];
-  }
-  
+// ----- গেম রিজিউম -----
+function resumeGame() {
   const saved = localStorage.getItem('breezeStormState');
   if (saved) {
     try {
@@ -233,16 +385,38 @@ window.onload = function() {
           loadCallRoundInputs();
         }
         updateScoreTable();
+        showNotification('গেম রিজিউম করা হয়েছে!', 'success');
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('রিজিউম করতে সমস্যা:', e);
+    }
   }
+}
+
+// ----- উইন্ডো লোড -----
+window.onload = function() {
+  // ডিফল্ট সেটআপ
+  document.getElementById('playerCountInput').value = 4;
+  createNameFields();
+  
+  // লোকাল স্টোরেজ চেক
+  resumeGame();
+  
+  // কীবোর্ড শর্টকাট
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && leaderboardModal.style.display === 'flex') {
+      closeLeaderboard();
+    }
+  });
 };
 
-// ----- ফাংশন এক্সপোর্ট (গ্লোবাল) -----
+// ----- গ্লোবাল ফাংশন -----
 window.createNameFields = createNameFields;
 window.startBonusRound = startBonusRound;
 window.submitBonusRound = submitBonusRound;
 window.submitCallRound = submitCallRound;
 window.endGame = endGame;
-window.saveGameToLocal = saveGameToLocal;
-window.computeCallScore = computeCallScore;
+window.showLeaderboard = showLeaderboard;
+window.closeLeaderboard = closeLeaderboard;
+window.newGame = newGame;
+window.resumeGame = resumeGame;
