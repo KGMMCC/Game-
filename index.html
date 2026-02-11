@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Breeze · বোনাস রাউন্ড</title>
+  
+  <!-- CSS লিংক -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="breeze-shelter">
+    <!-- গেম টাইটেল -->
+    <div class="title-storm">
+      <h1>🌀 কল ব্রীজ · বোনাস রাউন্ড</h1>
+      <span class="breeze-badge">⚡ ৪→৫ = ৪.১</span>
+    </div>
+
+    <!-- সেটআপ প্যানেল -->
+    <div id="setupPanel" class="panel glass-chamber">
+      <h3>🧑‍🤝‍🧑 খেলোয়াড় সেটআপ (২–৬)</h3>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <input type="number" id="playerCountInput" min="2" max="6" value="4" placeholder="কতজন খেলোয়াড়?" style="width: 200px;">
+        <button onclick="createNameFields()">📛 নামের ফিল্ড তৈরি</button>
+        <button onclick="startBonusRound()" style="background: #1c7c54; border-bottom-color: #0e4a2f;">🎲 শুরু বোনাস রাউন্ড</button>
+      </div>
+      <div id="nameFieldsContainer" class="name-grid" style="margin-top: 25px;"></div>
+      <div class="rule-footer" style="background: #e6f3f0; margin-top: 10px;">
+        ⭐ বোনাস রাউন্ড – কোনো কল নেই, শুধু উঠানো trick যোগ হবে। তারপর থেকেই কল রাউন্ড।
+      </div>
+    </div>
+
+    <!-- গেম প্যানেল -->
+    <div id="gamePanel" class="panel glass-chamber" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: baseline;">
+        <h2 id="roundTypeTitle">🎁 বোনাস রাউন্ড</h2>
+        <button id="endGameBtn" onclick="endGame()" style="background: #974747; border-bottom-color: #5e2e2e;">🏁 গেম শেষ</button>
+      </div>
+
+      <!-- বোনাস রাউন্ড এর এলাকা -->
+      <div id="bonusRoundArea">
+        <div class="bonus-arena">
+          <h3 style="border-left-color: #f3b33d; margin-bottom: 0;">🎁 বোনাস রাউন্ড – শুধু উঠানো সংখ্যা দিন</h3>
+          <div id="bonusInputsGrid" class="bonus-grid"></div>
+          <button onclick="submitBonusRound()" style="background: #d18f2c; border-bottom-color: #8a5a1a; margin-top: 25px; padding: 16px 40px;">✅ বোনাস রাউন্ড জমা দিন</button>
+        </div>
+      </div>
+
+      <!-- কল রাউন্ড এর এলাকা -->
+      <div id="callRoundArea" style="display: none;">
+        <div id="callRoundHeader" style="background: #d9e9ec; border-radius: 28px; padding: 0.8rem 2rem; margin-bottom: 10px;">
+          <h3 style="border-left-color: #1f7a8c;">📢 কল রাউন্ড – কল ও উঠানো দুইটাই দিন</h3>
+        </div>
+        <div id="callInputsGrid" class="call-round-grid"></div>
+        <button onclick="submitCallRound()" style="background: #1f7a8c; border-bottom-color: #0f4a54; margin-top: 20px; padding: 16px 45px;">🌪️ কল রাউন্ড জমা দিন</button>
+      </div>
+
+      <!-- স্কোর টেবিল -->
+      <h3 style="margin-top: 40px;">📊 লাইভ স্কোরবোর্ড</h3>
+      <table class="score-table" id="scoreTable">
+        <tr><th>খেলোয়াড়</th><th>মোট পয়েন্ট</th></tr>
+      </table>
+      <div class="rule-footer" style="margin-top: 25px;">
+        📍 নির্ভুল স্কোর : কল ৪, উঠে ৫ = ৪.১ | কল ৫, উঠে ৪ = -৫ | বোনাস রাউন্ডে সব trick যোগ হয়
+      </div>
+    </div>
+  </div>
+
+  <!-- জাভাস্ক্রিপ্ট লিংক -->
+  <script src="script.js"></script>
+</body>
+</html>
