@@ -1,0 +1,268 @@
+/* ------------------------------------------------ 
+   Call Breeze - উন্নত UI, অ্যানিমেশন, পুরোপুরি আলাদা CSS
+------------------------------------------------ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(145deg, #0b2a35 0%, #16404f 100%);
+  font-family: 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
+  padding: 2rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.breeze-shelter {
+  max-width: 1100px;
+  width: 100%;
+}
+
+/* মূল কার্ড — গ্লাসমরফিজম */
+.glass-chamber {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 56px 56px 48px 48px;
+  padding: 2.2rem 2rem;
+  box-shadow: 0 30px 40px -15px rgba(1, 20, 25, 0.6), inset 0 0 0 1px rgba(255,255,255,0.5);
+  border: none;
+  transition: all 0.2s ease;
+}
+
+/* টাইটেল - বোনাস রাউন্ড vibe */
+.title-storm {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.8rem;
+  flex-wrap: wrap;
+}
+
+.title-storm h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #fee49e, #b3e0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  display: flex;
+  gap: 10px;
+}
+
+.breeze-badge {
+  background: #1a6b6b;
+  padding: 8px 20px;
+  border-radius: 60px;
+  color: #f9f3c5;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: inset 0 -2px 0 #0e3b3b;
+}
+
+/* প্যানেল — সেটআপ, গেম */
+.panel {
+  background: rgba(245, 250, 255, 0.8);
+  border-radius: 36px;
+  padding: 2rem 2rem;
+  margin-top: 0.5rem;
+  border: 1px solid rgba(255,255,255,0.8);
+  box-shadow: 0 12px 0 #0b3a44, 0 20px 30px rgba(0,0,0,0.2);
+}
+
+h2, h3 {
+  color: #083b44;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+h3 {
+  border-left: 10px solid #39a0ad;
+  padding-left: 1rem;
+  margin-bottom: 1.6rem;
+}
+
+/* বাটন + ইনপুট — আলাদা ডিজাইন */
+input, button {
+  border-radius: 100px !important;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+}
+
+input {
+  background: white;
+  padding: 14px 22px;
+  border: 1px solid #bfdde0;
+  font-weight: 500;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.02);
+}
+
+input:focus {
+  border-color: #2f9e9e;
+  box-shadow: 0 0 0 3px rgba(47,158,158,0.2), inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+button {
+  background: #0e6b7a;
+  color: white;
+  font-weight: 700;
+  padding: 14px 28px;
+  border-bottom: 6px solid #06424b;
+  transition: all 0.05s linear;
+  cursor: pointer;
+  letter-spacing: 0.8px;
+}
+
+button:active {
+  transform: translateY(6px);
+  border-bottom-width: 2px;
+}
+
+/* প্লেয়ার নেম ফিল্ড */
+.name-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.name-grid input {
+  width: 80%;
+  max-width: 360px;
+}
+
+/* বোনাস রাউন্ড ইউআই */
+.bonus-arena {
+  background: #cde3e7;
+  border-radius: 28px;
+  padding: 1.8rem;
+  margin-bottom: 30px;
+  border: 3px solid #ffe69b;
+  box-shadow: 0 8px 0 #7f9fa5;
+  animation: softGlow 1.8s infinite alternate;
+}
+
+@keyframes softGlow {
+  0% { border-color: #ffe08c; }
+  100% { border-color: #ffc107; }
+}
+
+.bonus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.bonus-player-card {
+  background: white;
+  border-radius: 24px;
+  padding: 16px;
+  box-shadow: 0 5px 0 #98b6ba;
+  text-align: center;
+}
+
+.bonus-player-card h4 {
+  color: #075159;
+  font-size: 1.3rem;
+  border-bottom: 2px solid #51b3b3;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+/* কল রাউন্ডের কার্ড */
+.call-round-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin: 15px 0;
+}
+
+.call-card {
+  background: white;
+  border-radius: 24px;
+  padding: 16px 20px;
+  box-shadow: 0 7px 0 #789fa3;
+  transition: 0.1s;
+}
+
+.call-card h4 {
+  font-size: 1.4rem;
+  color: #17565e;
+  margin-bottom: 12px;
+}
+
+.input-pair {
+  display: flex;
+  justify-content: space-between;
+  margin: 12px 0;
+  align-items: center;
+}
+
+.input-pair label {
+  background: #add8e0;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-weight: 600;
+  color: #014147;
+}
+
+.input-pair input {
+  width: 85px;
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 12px 0;
+}
+
+/* স্কোর টেবিল */
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 30px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 12px 20px rgba(0, 40, 40, 0.2);
+}
+
+.score-table th {
+  background: #1b5e6b;
+  color: white;
+  padding: 16px 8px;
+  font-size: 1.1rem;
+}
+
+.score-table td {
+  background: rgba(255,255,255,0.85);
+  padding: 14px 8px;
+  color: #05262c;
+  font-weight: 600;
+  border-bottom: 1px solid #c2d8dc;
+}
+
+.winner-row {
+  background: radial-gradient(circle at 10% 30%, #ffd966, #fbb13c) !important;
+  color: #021013 !important;
+  font-weight: 800;
+  animation: winnerFlash 0.9s infinite alternate;
+}
+
+@keyframes winnerFlash {
+  from { filter: brightness(1); }
+  to { filter: brightness(1.1); }
+}
+
+/* ফুটার - নিয়ম */
+.rule-footer {
+  background: #bfe3e0;
+  border-radius: 40px;
+  padding: 16px 26px;
+  margin-top: 30px;
+  color: #01494f;
+  font-weight: 600;
+}
