@@ -3,90 +3,312 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Call Breeze · লিডারবোর্ড অ্যারেনা</title>
+  <title>Call Breeze Pro v5.0 | আল্ট্রা প্রিমিয়াম কল ব্রিজ</title>
+  
+  <!-- ফন্ট & আইকন -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <!-- কাস্টম CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <div class="breeze-shelter">
-    <!-- টাইটেল -->
-    <div class="title-storm">
-      <h1>🌀 কল ব্রীজ · লিডারবোর্ড অ্যারেনা</h1>
-      <span class="breeze-badge">⚡ v২.০ ⚡</span>
-    </div>
+<body class="theme-pro">
+  <!-- অ্যানিমেটেড ব্যাকগ্রাউন্ড -->
+  <div class="gradient-bg">
+    <div class="gradient-1"></div>
+    <div class="gradient-2"></div>
+    <div class="gradient-3"></div>
+  </div>
 
-    <!-- সেটআপ প্যানেল -->
-    <div id="setupPanel" class="panel glass-chamber">
-      <h3>🧑‍🤝‍🧑 খেলোয়াড় সেটআপ (২–৬)</h3>
-      <div class="setup-controls">
-        <input type="number" id="playerCountInput" min="2" max="6" value="4" placeholder="কতজন খেলোয়াড়?">
-        <button onclick="createNameFields()" class="btn-primary">📛 নামের ফিল্ড তৈরি</button>
-        <button onclick="startBonusRound()" class="btn-success">🎲 শুরু বোনাস রাউন্ড</button>
-      </div>
-      <div id="nameFieldsContainer" class="name-grid"></div>
-      <div class="rule-footer">
-        ⭐ বোনাস রাউন্ড – কোনো কল নেই, শুধু উঠানো trick যোগ হবে। তারপর থেকেই কল রাউন্ড।
-      </div>
-    </div>
+  <!-- পার্টিকেল ইফেক্ট -->
+  <div id="particles" class="particles"></div>
 
-    <!-- গেম প্যানেল -->
-    <div id="gamePanel" class="panel glass-chamber" style="display: none;">
-      <div class="game-header">
-        <h2 id="roundTypeTitle">🎁 বোনাস রাউন্ড</h2>
-        <button onclick="endGame()" class="btn-danger">🏁 গেম শেষ</button>
-      </div>
+  <div class="app-wrapper">
+    <!-- সাইডবার -->
+    <aside class="sidebar">
+      <div class="sidebar-inner">
+        <!-- লোগো -->
+        <div class="logo-container">
+          <div class="logo-icon">
+            <i class="fas fa-wind"></i>
+          </div>
+          <div class="logo-text">
+            <span class="logo-main">Call Breeze</span>
+            <span class="logo-badge">PRO v5.0</span>
+          </div>
+        </div>
 
-      <!-- বোনাস রাউন্ড এর এলাকা -->
-      <div id="bonusRoundArea">
-        <div class="bonus-arena">
-          <h3>🎁 বোনাস রাউন্ড – শুধু উঠানো সংখ্যা দিন</h3>
-          <div id="bonusInputsGrid" class="bonus-grid"></div>
-          <button onclick="submitBonusRound()" class="btn-gold">✅ বোনাস রাউন্ড জমা দিন</button>
+        <!-- নেভিগেশন মেনু -->
+        <nav class="sidebar-nav">
+          <div class="nav-item active" onclick="switchPanel('setup')">
+            <i class="fas fa-users"></i>
+            <span>সেটআপ</span>
+            <div class="nav-indicator"></div>
+          </div>
+          <div class="nav-item" onclick="switchPanel('game')">
+            <i class="fas fa-gamepad"></i>
+            <span>গেম</span>
+            <div class="nav-indicator"></div>
+          </div>
+          <div class="nav-item" onclick="openLeaderboard()">
+            <i class="fas fa-trophy"></i>
+            <span>লিডারবোর্ড</span>
+            <div class="nav-indicator"></div>
+          </div>
+          <div class="nav-item" onclick="openHistory()">
+            <i class="fas fa-clock-rotate-left"></i>
+            <span>হিস্ট্রি</span>
+            <div class="nav-indicator"></div>
+          </div>
+        </nav>
+
+        <!-- থিম সুইচার ও ফুটার -->
+        <div class="sidebar-footer">
+          <div class="theme-selector">
+            <button class="theme-option active" onclick="setTheme('pro')" title="প্রো থিম">
+              <i class="fas fa-gem"></i>
+            </button>
+            <button class="theme-option" onclick="setTheme('dark')" title="ডার্ক থিম">
+              <i class="fas fa-moon"></i>
+            </button>
+            <button class="theme-option" onclick="setTheme('light')" title="লাইট থিম">
+              <i class="fas fa-sun"></i>
+            </button>
+          </div>
+          <div class="version-info">
+            <i class="fas fa-code-branch"></i>
+            <span>v5.0.0 · প্রিমিয়াম</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- মেইন কন্টেন্ট এরিয়া -->
+    <main class="main-area">
+      <!-- সেটআপ প্যানেল -->
+      <div id="setupPanel" class="panel active">
+        <div class="panel-header">
+          <div class="header-title">
+            <i class="fas fa-users-gear"></i>
+            <h2>খেলোয়াড় সেটআপ</h2>
+          </div>
+          <div class="header-badge pulse-animation">
+            <i class="fas fa-user-plus"></i>
+            <span>২-৬ প্লেয়ার</span>
+          </div>
+        </div>
+
+        <div class="panel-content">
+          <div class="setup-card glass-card">
+            <div class="input-group">
+              <label>
+                <i class="fas fa-hashtag"></i>
+                <span>প্লেয়ার সংখ্যা</span>
+              </label>
+              <div class="counter-input">
+                <button class="counter-btn" onclick="adjustCount(-1)">
+                  <i class="fas fa-minus"></i>
+                </button>
+                <input type="number" id="playerCount" class="count-field" value="4" min="2" max="6" readonly>
+                <button class="counter-btn" onclick="adjustCount(1)">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <button class="btn-primary btn-block" onclick="generateNameFields()">
+              <i class="fas fa-pen"></i>
+              <span>নামের ফিল্ড তৈরি করুন</span>
+            </button>
+
+            <div id="nameFieldsContainer" class="name-fields-grid"></div>
+
+            <button class="btn-success btn-block btn-large" onclick="startBonusRound()">
+              <i class="fas fa-play"></i>
+              <span>বোনাস রাউন্ড শুরু</span>
+            </button>
+
+            <div class="info-message">
+              <i class="fas fa-info-circle"></i>
+              <p>বোনাস রাউন্ডে কোন কল নেই, শুধু উঠানো সংখ্যা যোগ হবে</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- কল রাউন্ড এর এলাকা -->
-      <div id="callRoundArea" style="display: none;">
-        <div class="call-header">
-          <h3>📢 কল রাউন্ড – কল ও উঠানো দুইটাই দিন</h3>
+      <!-- গেম প্যানেল -->
+      <div id="gamePanel" class="panel">
+        <div class="panel-header">
+          <div class="header-title">
+            <i class="fas fa-dice-d6"></i>
+            <h2 id="roundTitle">বোনাস রাউন্ড</h2>
+          </div>
+          <div class="header-actions">
+            <div class="round-counter">
+              <span class="round-current" id="currentRound">১</span>
+              <span class="round-separator">/</span>
+              <span class="round-total" id="totalRounds">?</span>
+            </div>
+            <button class="btn-danger btn-icon" onclick="endGame()" title="গেম শেষ">
+              <i class="fas fa-flag-checkered"></i>
+            </button>
+          </div>
         </div>
-        <div id="callInputsGrid" class="call-round-grid"></div>
-        <button onclick="submitCallRound()" class="btn-teal">🌪️ কল রাউন্ড জমা দিন</button>
-      </div>
 
-      <!-- লাইভ স্কোরবোর্ড -->
-      <h3 class="section-title">📊 লাইভ স্কোরবোর্ড</h3>
-      <table class="score-table" id="scoreTable">
-        <thead>
-          <tr><th>খেলোয়াড়</th><th>মোট পয়েন্ট</th></tr>
-        </thead>
-        <tbody id="scoreTableBody"></tbody>
-      </table>
-      
-      <!-- নির্দেশিকা -->
-      <div class="rule-footer">
-        📍 নির্ভুল স্কোর : কল ৪, উঠে ৫ = ৪.১ | কল ৫, উঠে ৪ = -৫ | বোনাস রাউন্ডে সব trick যোগ হয়
-      </div>
-    </div>
+        <!-- লাইভ স্ট্যাটাস বার -->
+        <div class="status-bar" id="statusBar">
+          <div class="status-icon">
+            <i class="fas fa-circle-play"></i>
+          </div>
+          <div class="status-text" id="statusText">বোনাস রাউন্ড চলছে</div>
+          <div class="status-phase" id="statusPhase">🎁</div>
+        </div>
 
-    <!-- লিডারবোর্ড মডাল -->
-    <div id="leaderboardModal" class="modal">
-      <div class="modal-content glass-chamber">
-        <div class="modal-header">
-          <h2>🏆 চ্যাম্পিয়নশিপ লিডারবোর্ড 🏆</h2>
-          <button onclick="closeLeaderboard()" class="close-btn">&times;</button>
+        <!-- বোনাস রাউন্ড এরিয়া -->
+        <div id="bonusArea" class="game-area">
+          <div class="area-header">
+            <h3>
+              <i class="fas fa-gift"></i>
+              বোনাস রাউন্ড
+            </h3>
+          </div>
+          <div id="bonusPlayersGrid" class="players-grid"></div>
+          <button class="btn-gold btn-block btn-large" onclick="submitBonusRound()">
+            <i class="fas fa-check-double"></i>
+            <span>বোনাস রাউন্ড জমা দিন</span>
+          </button>
         </div>
-        <div class="modal-body">
-          <div id="leaderboardPodium" class="podium-container"></div>
-          <div id="leaderboardList" class="leaderboard-list"></div>
+
+        <!-- কল রাউন্ড এরিয়া -->
+        <div id="callArea" class="game-area">
+          <!-- কল ফেজ -->
+          <div id="callPhase" class="game-phase">
+            <div class="phase-indicator">
+              <span class="phase-name">কল ফেজ</span>
+              <span class="phase-step">১/২</span>
+            </div>
+            <div id="callPlayersGrid" class="players-grid"></div>
+            <button class="btn-primary btn-block btn-large" onclick="submitCallPhase()">
+              <i class="fas fa-phone"></i>
+              <span>কল সাবমিট করুন</span>
+            </button>
+          </div>
+
+          <!-- ট্রিক ফেজ -->
+          <div id="trickPhase" class="game-phase hidden">
+            <div class="phase-indicator">
+              <span class="phase-name">ট্রিক ফেজ</span>
+              <span class="phase-step">২/২</span>
+            </div>
+            <div id="trickPlayersGrid" class="players-grid"></div>
+            <button class="btn-purple btn-block btn-large" onclick="submitTrickPhase()">
+              <i class="fas fa-hand-peace"></i>
+              <span>ট্রিক সাবমিট করুন</span>
+            </button>
+          </div>
         </div>
-        <div class="modal-footer">
-          <button onclick="newGame()" class="btn-success">🔄 নতুন গেম শুরু</button>
-          <button onclick="closeLeaderboard()" class="btn-primary">🔙 গেমে ফিরুন</button>
+
+        <!-- স্কোরবোর্ড -->
+        <div class="scoreboard-section">
+          <div class="scoreboard-header">
+            <h4>
+              <i class="fas fa-chart-line"></i>
+              লাইভ স্কোরবোর্ড
+            </h4>
+            <div class="scoreboard-actions">
+              <button class="action-btn" onclick="toggleStats()" title="পরিসংখ্যান">
+                <i class="fas fa-chart-pie"></i>
+              </button>
+              <button class="action-btn" onclick="refreshBoard()" title="রিফ্রেশ">
+                <i class="fas fa-rotate"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="score-table">
+              <thead>
+                <tr>
+                  <th>প্লেয়ার</th>
+                  <th>মোট</th>
+                  <th>সঠিক</th>
+                  <th>বোনাস</th>
+                  <th>ফর্ম</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboardBody"></tbody>
+            </table>
+          </div>
+
+          <!-- স্ট্যাটস প্যানেল -->
+          <div id="statsPanel" class="stats-panel hidden">
+            <h5>
+              <i class="fas fa-chart-simple"></i>
+              রাউন্ড পরিসংখ্যান
+            </h5>
+            <div id="statsGrid" class="stats-grid"></div>
+          </div>
         </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- লিডারবোর্ড মডাল -->
+  <div id="leaderboardModal" class="modal">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h2>
+          <i class="fas fa-crown"></i>
+          চ্যাম্পিয়নশিপ লিডারবোর্ড
+        </h2>
+        <button class="modal-close" onclick="closeLeaderboard()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="podiumContainer" class="podium"></div>
+        <div id="leaderboardList" class="leaderboard-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-success" onclick="newGame()">
+          <i class="fas fa-plus-circle"></i>
+          নতুন গেম
+        </button>
+        <button class="btn-secondary" onclick="closeLeaderboard()">
+          <i class="fas fa-arrow-left"></i>
+          ফিরুন
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- হিস্ট্রি মডাল -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content glass-card">
+      <div class="modal-header">
+        <h2>
+          <i class="fas fa-timeline"></i>
+          গেম হিস্ট্রি
+        </h2>
+        <button class="modal-close" onclick="closeHistory()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="historyContainer" class="history-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- টোস্ট নোটিফিকেশন কন্টেইনার -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- কনফেটি ইফেক্ট (বিজয়ী ঘোষণার জন্য) -->
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+  <!-- জাভাস্ক্রিপ্ট -->
   <script src="script.js"></script>
 </body>
-            </html>
+  </html>
