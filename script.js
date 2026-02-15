@@ -7,81 +7,83 @@ let playerStats = [];
 let roundHistory = [];
 let currentRound = 1;
 let currentCallValues = [];
-let gameActive = false;
+let currentTrickValues = [];
+let gameCode = '';
 
-// ========== ডোম এলিমেন্ট ==========
+let predictors = [];
+let currentPredictor = null;
+let connectedGame = null;
+let activeBets = [];
+let bettingFeed = [];
+let currentCigaretteAmount = 10;
+let totalPool = 0;
+
+// ========== DOM এলিমেন্ট ==========
 const setupPanel = document.getElementById('setupPanel');
 const gamePanel = document.getElementById('gamePanel');
 const bonusArea = document.getElementById('bonusArea');
 const callArea = document.getElementById('callArea');
 const callPhase = document.getElementById('callPhase');
 const trickPhase = document.getElementById('trickPhase');
-const roundTitle = document.getElementById('roundTitle');
-const currentRoundSpan = document.getElementById('currentRound');
-const totalRoundsSpan = document.getElementById('totalRounds');
-const scoreboardBody = document.getElementById('scoreboardBody');
-const nameFieldsContainer = document.getElementById('nameFieldsContainer');
-const statusText = document.getElementById('statusText');
-const statusPhase = document.getElementById('statusPhase');
-const toastContainer = document.getElementById('toastContainer');
-const confettiCanvas = document.getElementById('confettiCanvas');
-const particlesContainer = document.getElementById('particles');
+const scoreTableBody = document.getElementById('scoreTableBody');
+const nameFields = document.getElementById('nameFields');
+const mainGameStatus = document.getElementById('mainGameStatus');
+const mainRoundInfo = document.getElementById('mainRoundInfo');
+const mainGameCode = document.getElementById('mainGameCode');
 
-// ========== থিম ম্যানেজমেন্ট ==========
+const predictorCigarettes = document.getElementById('predictorCigarettes');
+const connectedGameInfo = document.getElementById('connectedGameInfo');
+const connectedGameCode = document.getElementById('connectedGameCode');
+const connectedPlayers = document.getElementById('connectedPlayers');
+const connectedRound = document.getElementById('connectedRound');
+const liveGamePlayers = document.getElementById('liveGamePlayers');
+const roundMarket = document.getElementById('roundMarket');
+const exactCallMarket = document.getElementById('exactCallMarket');
+const overUnderMarket = document.getElementById('overUnderMarket');
+const matchWinnerMarket = document.getElementById('matchWinnerMarket');
+const bettingFeedContainer = document.getElementById('bettingFeed');
+const totalBetsCount = document.getElementById('totalBetsCount');
+const predictorsList = document.getElementById('predictorsList');
+const betSlipItems = document.getElementById('betSlipItems');
+const totalBetAmount = document.getElementById('totalBetAmount');
+const predictorHistoryList = document.getElementById('predictorHistoryList');
+const predictorCigaretteInput = document.getElementById('predictorCigaretteInput');
+
+const gameEndModal = document.getElementById('gameEndModal');
+const podiumContainer = document.getElementById('podiumContainer');
+const finalScoresList = document.getElementById('finalScoresList');
+const betModal = document.getElementById('betModal');
+const predictorSetupModal = document.getElementById('predictorSetupModal');
+const modalBetDetails = document.getElementById('modalBetDetails');
+const modalPotentialWin = document.getElementById('modalPotentialWin');
+
+const toastContainer = document.getElementById('toastContainer');
+
+// ========== থিম ফাংশন ==========
 function setTheme(theme) {
   document.body.className = `theme-${theme}`;
-  
-  document.querySelectorAll('.theme-option').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  
-  document.querySelector(`.theme-option[onclick="setTheme('${theme}')"]`).classList.add('active');
-  
   localStorage.setItem('breezeTheme', theme);
-  showToast(`${theme} থিম অ্যাক্টিভেটেড`, 'success');
+  showToast(`${theme === 'neon' ? 'নিয়ন' : theme === 'day' ? 'ডে' : 'নাইট'} মোড অ্যাক্টিভেটেড`, 'success');
 }
 
-// ========== পার্টিকেল ইফেক্ট ==========
-function createParticles() {
-  if (!particlesContainer) return;
+// ========== ট্যাব সুইচিং ==========
+function switchMainTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
   
-  for (let i = 0; i < 50; i++) {
-    const particle = document.createElement('div');
-    particle.style.cssText = `
-      position: absolute;
-      width: ${Math.random() * 3}px;
-      height: ${Math.random() * 3}px;
-      background: rgba(255, 255, 255, ${Math.random() * 0.3});
-      border-radius: 50%;
-      left: ${Math.random() * 100}%;
-      top: ${Math.random() * 100}%;
-      animation: float ${Math.random() * 10 + 5}s linear infinite;
-      pointer-events: none;
-    `;
-    particlesContainer.appendChild(particle);
+  if (tab === 'game') {
+    document.querySelectorAll('.tab-btn')[0].classList.add('active');
+    document.getElementById('gameTab').classList.add('active');
+  } else {
+    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+    document.getElementById('predictionTab').classList.add('active');
+    updatePredictionUI();
   }
 }
 
-// ========== প্যানেল সুইচিং ==========
-function switchPanel(panel) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-  
-  if (panel === 'setup') {
-    setupPanel.classList.add('active');
-    event.currentTarget.classList.add('active');
-  } else if (panel === 'game') {
-    if (players.length > 0) {
-      gamePanel.classList.add('active');
-      event.currentTarget.classList.add('active');
-    } else {
-      showToast('প্রথমে খেলোয়াড় সেটআপ করুন', 'error');
-    }
-  }
-}
+// ========== গেম ফাংশন ==========
 
-// ========== কাউন্ট অ্যাডজাস্ট ==========
-function adjustCount(delta) {
+function adjustPlayerCount(delta) {
   const input = document.getElementById('playerCount');
   let value = parseInt(input.value) + delta;
   if (value < 2) value = 2;
@@ -89,145 +91,71 @@ function adjustCount(delta) {
   input.value = value;
 }
 
-// ========== টোস্ট নোটিফিকেশন ==========
-function showToast(message, type = 'info', duration = 3000) {
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  
-  let icon = 'fa-circle-info';
-  if (type === 'success') icon = 'fa-circle-check';
-  if (type === 'error') icon = 'fa-circle-exclamation';
-  
-  toast.innerHTML = `
-    <i class="fas ${icon}"></i>
-    <span>${message}</span>
-  `;
-  
-  toastContainer.appendChild(toast);
-  
-  setTimeout(() => {
-    toast.style.animation = 'slideOutRight 0.3s ease';
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
-}
-
-// ========== কনফেটি ইফেক্ট ==========
-function shootConfetti() {
-  const canvas = confettiCanvas;
-  const ctx = canvas.getContext('2d');
-  
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  
-  const particles = [];
-  const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
-  
-  for (let i = 0; i < 150; i++) {
-    particles.push({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height - canvas.height,
-      size: Math.random() * 8 + 4,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      speed: Math.random() * 5 + 2,
-      angle: Math.random() * Math.PI * 2
-    });
-  }
-  
-  function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    let stillFalling = false;
-    
-    particles.forEach(p => {
-      p.y += p.speed;
-      p.x += Math.sin(p.angle) * 0.5;
-      
-      if (p.y < canvas.height + 50) {
-        stillFalling = true;
-      }
-      
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
-      ctx.fillStyle = p.color;
-      ctx.fill();
-    });
-    
-    if (stillFalling) {
-      requestAnimationFrame(animate);
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  }
-  
-  animate();
-}
-
-// ========== নাম ফিল্ড জেনারেট ==========
 function generateNameFields() {
   const count = parseInt(document.getElementById('playerCount').value);
-  
   const avatars = ['👑', '⚡', '🌟', '🔥', '💎', '🎯'];
   let html = '';
   
   for (let i = 0; i < count; i++) {
     html += `
-      <div class="name-input-wrapper">
-        <span class="player-avatar">${avatars[i]}</span>
-        <input type="text" id="playerName${i}" 
-               placeholder="প্লেয়ার ${i+1}" 
-               value="প্লেয়ার ${i+1}">
+      <div class="name-input">
+        <span>${avatars[i]}</span>
+        <input type="text" id="playerName${i}" value="প্লেয়ার ${i+1}" placeholder="নাম দিন">
       </div>
     `;
   }
   
-  nameFieldsContainer.innerHTML = html;
-  showToast(`${count} জন প্লেয়ারের ফিল্ড তৈরি হয়েছে`, 'success');
+  nameFields.innerHTML = html;
 }
 
-// ========== গেম স্টার্ট ==========
+function generateGameCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 function startBonusRound() {
   const count = parseInt(document.getElementById('playerCount').value);
   
-  // প্লেয়ার নাম সংগ্রহ
   players = [];
   playerStats = [];
   
   for (let i = 0; i < count; i++) {
-    let nameField = document.getElementById(`playerName${i}`);
-    let name = nameField ? nameField.value.trim() : '';
-    if (name === '') name = `প্লেয়ার ${i+1}`;
+    let nameInput = document.getElementById(`playerName${i}`);
+    let name = nameInput ? nameInput.value.trim() : `প্লেয়ার ${i+1}`;
     players.push(name);
     playerStats.push({
       correctCalls: 0,
-      bonusPoints: 0,
-      totalRounds: 0
+      bonusPoints: 0
     });
   }
   
   totalScores = new Array(players.length).fill(0);
   currentRound = 1;
-  roundHistory = [];
-  currentCallValues = [];
+  currentCallValues = new Array(players.length).fill(0);
+  currentTrickValues = new Array(players.length).fill(0);
   
-  // UI আপডেট
+  gameCode = generateGameCode();
+  mainGameCode.textContent = gameCode;
+  
   setupPanel.classList.remove('active');
   gamePanel.classList.add('active');
+  mainGameStatus.textContent = 'বোনাস রাউন্ড চলছে';
+  mainRoundInfo.textContent = `রাউন্ড ${currentRound}`;
   
-  document.querySelectorAll('.nav-item')[0].classList.remove('active');
-  document.querySelectorAll('.nav-item')[1].classList.add('active');
-  
-  updateRoundCounter();
   showBonusRound();
-  updateScoreboard();
-  updateStatus('বোনাস রাউন্ড চলছে', '🎁');
-  showToast('বোনাস রাউন্ড শুরু হয়েছে!', 'success');
+  updateScoreTable();
+  showToast(`গেম শুরু! কোড: ${gameCode}`, 'success');
+  
+  updateConnectedGameData();
 }
 
-// ========== বোনাস রাউন্ড দেখান ==========
 function showBonusRound() {
   bonusArea.style.display = 'block';
   callArea.style.display = 'none';
-  roundTitle.innerHTML = '🎁 বোনাস রাউন্ড';
   
   const grid = document.getElementById('bonusPlayersGrid');
   grid.innerHTML = '';
@@ -238,7 +166,6 @@ function showBonusRound() {
   });
 }
 
-// ========== প্লেয়ার কার্ড তৈরি ==========
 function createPlayerCard(player, idx, type) {
   const card = document.createElement('div');
   card.className = 'player-card';
@@ -247,50 +174,44 @@ function createPlayerCard(player, idx, type) {
   
   if (type === 'bonus') {
     card.innerHTML = `
-      <div class="player-card-header">
-        <span class="player-avatar-large">${avatars[idx]}</span>
-        <h4>${player}</h4>
+      <div class="player-header">
+        <span class="player-avatar">${avatars[idx]}</span>
+        <div class="player-info">
+          <h4>${player}</h4>
+        </div>
       </div>
       <div class="input-pair">
         <label>উঠেছে</label>
         <input type="number" id="bonus${idx}" min="0" value="" placeholder="০" step="1">
       </div>
-      <div class="hint">
-        <i class="fas fa-gift"></i>
-        বোনাস রাউন্ডে সব উঠানো যোগ হবে
-      </div>
     `;
   } else if (type === 'call') {
     card.innerHTML = `
-      <div class="player-card-header">
-        <span class="player-avatar-large">${avatars[idx]}</span>
-        <h4>${player}</h4>
+      <div class="player-header">
+        <span class="player-avatar">${avatars[idx]}</span>
+        <div class="player-info">
+          <h4>${player}</h4>
+        </div>
       </div>
       <div class="input-pair">
         <label>কল</label>
-        <input type="number" id="call${idx}" min="0" value="" placeholder="০" step="1">
-      </div>
-      <div class="hint">
-        <i class="fas fa-lightbulb"></i>
-        আপনি কত trick পাবেন মনে করেন?
+        <input type="number" id="call${idx}" min="0" value="" placeholder="০" step="1" onchange="updateCallValue(${idx}, this.value)">
       </div>
     `;
   } else if (type === 'trick') {
     card.innerHTML = `
-      <div class="player-card-header">
-        <span class="player-avatar-large">${avatars[idx]}</span>
-        <h4>${player}</h4>
+      <div class="player-header">
+        <span class="player-avatar">${avatars[idx]}</span>
+        <div class="player-info">
+          <h4>${player}</h4>
+        </div>
       </div>
       <div class="call-summary">
-        <span class="call-badge">কল: ${currentCallValues[idx] || 0}</span>
+        কল: ${currentCallValues[idx] || 0}
       </div>
       <div class="input-pair">
         <label>উঠেছে</label>
-        <input type="number" id="trick${idx}" min="0" value="" placeholder="০" step="1">
-      </div>
-      <div class="hint">
-        <i class="fas fa-calculator"></i>
-        কলের সাথে মিলিয়ে স্কোর হবে
+        <input type="number" id="trick${idx}" min="0" value="" placeholder="০" step="1" onchange="updateTrickValue(${idx}, this.value)">
       </div>
     `;
   }
@@ -298,54 +219,39 @@ function createPlayerCard(player, idx, type) {
   return card;
 }
 
-// ========== বোনাস রাউন্ড সাবমিট ==========
+function updateCallValue(index, value) {
+  currentCallValues[index] = parseInt(value) || 0;
+  updateLiveGameView();
+  updatePredictionMarkets();
+}
+
+function updateTrickValue(index, value) {
+  currentTrickValues[index] = parseInt(value) || 0;
+}
+
 function submitBonusRound() {
-  if (currentRound !== 1) return;
-  
-  let hasValue = false;
-  const roundData = {
-    round: 1,
-    type: 'bonus',
-    players: []
-  };
-  
   players.forEach((_, i) => {
     const input = document.getElementById(`bonus${i}`);
     let got = parseInt(input?.value, 10) || 0;
-    if (got > 0) hasValue = true;
-    
     totalScores[i] += got;
-    
-    roundData.players.push({
-      name: players[i],
-      got: got,
-      score: got
-    });
   });
   
-  if (!hasValue) {
-    showToast('অনুগ্রহ করে উঠানো সংখ্যা দিন', 'error');
-    return;
-  }
-  
-  roundHistory.push(roundData);
-  
   currentRound = 2;
-  updateRoundCounter();
-  roundTitle.innerHTML = '📞 কল রাউন্ড';
+  mainRoundInfo.textContent = `রাউন্ড ${currentRound}`;
+  mainGameStatus.textContent = 'কল ফেজ চলছে';
   
   bonusArea.style.display = 'none';
   callArea.style.display = 'block';
-  callPhase.classList.remove('hidden');
-  trickPhase.classList.add('hidden');
+  callPhase.style.display = 'block';
+  trickPhase.style.display = 'none';
   
   loadCallPhase();
-  updateScoreboard();
-  updateStatus('কল ফেজ - সবাই কল দিন', '📞');
-  showToast('বোনাস রাউন্ড জমা হয়েছে!', 'success');
+  updateScoreTable();
+  showToast('বোনাস রাউন্ড শেষ', 'success');
+  
+  updateConnectedGameData();
 }
 
-// ========== কল ফেজ লোড ==========
 function loadCallPhase() {
   const grid = document.getElementById('callPlayersGrid');
   grid.innerHTML = '';
@@ -354,34 +260,27 @@ function loadCallPhase() {
     const card = createPlayerCard(player, idx, 'call');
     grid.appendChild(card);
   });
+  
+  updateLiveGameView();
 }
 
-// ========== কল ফেজ সাবমিট ==========
 function submitCallPhase() {
-  currentCallValues = [];
-  let hasValue = false;
-  
   players.forEach((_, i) => {
     const input = document.getElementById(`call${i}`);
     let call = parseInt(input?.value, 10) || 0;
     currentCallValues[i] = call;
-    if (call > 0) hasValue = true;
   });
   
-  if (!hasValue) {
-    showToast('অনুগ্রহ করে কল দিন', 'error');
-    return;
-  }
-  
-  callPhase.classList.add('hidden');
-  trickPhase.classList.remove('hidden');
+  callPhase.style.display = 'none';
+  trickPhase.style.display = 'block';
   
   loadTrickPhase();
-  updateStatus('ট্রিক ফেজ - কত trick উঠলো দিন', '🎯');
-  showToast('কল সাবমিট হয়েছে!', 'success');
+  showToast('কল সাবমিট হয়েছে', 'success');
+  
+  updateConnectedGameData();
+  updateLiveGameView();
 }
 
-// ========== ট্রিক ফেজ লোড ==========
 function loadTrickPhase() {
   const grid = document.getElementById('trickPlayersGrid');
   grid.innerHTML = '';
@@ -392,60 +291,38 @@ function loadTrickPhase() {
   });
 }
 
-// ========== ট্রিক ফেজ সাবমিট ==========
 function submitTrickPhase() {
-  let hasValue = false;
-  const roundData = {
-    round: currentRound,
-    type: 'call',
-    players: []
-  };
-  
   players.forEach((_, i) => {
     const input = document.getElementById(`trick${i}`);
     let got = parseInt(input?.value, 10) || 0;
-    if (got > 0) hasValue = true;
+    currentTrickValues[i] = got;
     
     let call = currentCallValues[i] || 0;
     let score = calculateScore(call, got);
-    
     totalScores[i] += score;
     
     if (call === got) playerStats[i].correctCalls++;
-    if (got > call) playerStats[i].bonusPoints += (got - call);
-    playerStats[i].totalRounds++;
-    
-    roundData.players.push({
-      name: players[i],
-      call: call,
-      got: got,
-      score: score
-    });
   });
   
-  if (!hasValue) {
-    showToast('অনুগ্রহ করে উঠানো সংখ্যা দিন', 'error');
-    return;
-  }
-  
-  roundHistory.push(roundData);
+  checkBetResults(currentRound);
   
   currentRound++;
-  updateRoundCounter();
+  mainRoundInfo.textContent = `রাউন্ড ${currentRound}`;
+  mainGameStatus.textContent = 'কল ফেজ চলছে';
   
-  callPhase.classList.remove('hidden');
-  trickPhase.classList.add('hidden');
+  callPhase.style.display = 'block';
+  trickPhase.style.display = 'none';
   
   loadCallPhase();
-  updateScoreboard();
-  updateStatus(`রাউন্ড ${currentRound} - কল ফেজ শুরু`, '📞');
-  showToast(`রাউন্ড ${currentRound-1} সম্পন্ন!`, 'success');
+  updateScoreTable();
+  showToast(`রাউন্ড ${currentRound-1} শেষ`, 'success');
+  
+  updateConnectedGameData();
 }
 
-// ========== স্কোর ক্যালকুলেশন ==========
 function calculateScore(call, got) {
-  call = parseInt(call, 10) || 0;
-  got = parseInt(got, 10) || 0;
+  call = parseInt(call) || 0;
+  got = parseInt(got) || 0;
   
   if (got > call) {
     return call + ((got - call) * 0.1);
@@ -456,323 +333,715 @@ function calculateScore(call, got) {
   }
 }
 
-// ========== স্কোরবোর্ড আপডেট ==========
-function updateScoreboard() {
-  if (!players.length) return;
-  
+function updateScoreTable() {
   let html = '';
   
-  // ফর্ম ক্যালকুলেশন
   players.forEach((player, i) => {
-    let form = '⚪';
-    if (playerStats[i].totalRounds > 0) {
-      const correctRatio = playerStats[i].correctCalls / playerStats[i].totalRounds;
-      if (correctRatio > 0.6) form = '🔥';
-      else if (correctRatio < 0.3) form = '❄️';
-    }
-    
-    const avatars = ['👑', '⚡', '🌟', '🔥', '💎', '🎯'];
-    
     html += `
       <tr>
-        <td>
-          <span style="margin-right: 8px;">${avatars[i]}</span>
-          ${player}
-        </td>
-        <td class="score-cell">${totalScores[i].toFixed(1)}</td>
-        <td>${playerStats[i].correctCalls}</td>
-        <td>${playerStats[i].bonusPoints}</td>
-        <td>${form}</td>
+        <td>${player}</td>
+        <td>${currentCallValues[i] || '-'}</td>
+        <td>${currentTrickValues[i] || '-'}</td>
+        <td>${totalScores[i].toFixed(1)}</td>
       </tr>
     `;
   });
   
-  scoreboardBody.innerHTML = html;
+  scoreTableBody.innerHTML = html;
 }
 
-// ========== রাউন্ড কাউন্টার আপডেট ==========
-function updateRoundCounter() {
-  currentRoundSpan.textContent = currentRound;
-  totalRoundsSpan.textContent = roundHistory.length + 1;
+function copyMainGameCode() {
+  navigator.clipboard.writeText(gameCode);
+  showToast('গেম কোড কপি হয়েছে!', 'success');
 }
 
-// ========== স্ট্যাটাস আপডেট ==========
-function updateStatus(text, emoji) {
-  statusText.textContent = text;
-  statusPhase.textContent = emoji;
-}
-
-// ========== স্ট্যাটস টগল ==========
-function toggleStats() {
-  const panel = document.getElementById('statsPanel');
-  const grid = document.getElementById('statsGrid');
-  
-  if (panel.classList.contains('hidden')) {
-    // স্ট্যাটস আপডেট
-    const totalRounds = roundHistory.length;
-    const callRounds = roundHistory.filter(r => r.type === 'call').length;
-    const totalCorrect = playerStats.reduce((acc, s) => acc + s.correctCalls, 0);
-    const totalBonus = playerStats.reduce((acc, s) => acc + s.bonusPoints, 0);
-    
-    grid.innerHTML = `
-      <div class="stat-item">
-        <div class="stat-value">${totalRounds}</div>
-        <div class="stat-label">মোট রাউন্ড</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">${callRounds}</div>
-        <div class="stat-label">কল রাউন্ড</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">${totalCorrect}</div>
-        <div class="stat-label">সঠিক কল</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">${totalBonus.toFixed(1)}</div>
-        <div class="stat-label">বোনাস</div>
-      </div>
-    `;
-    
-    panel.classList.remove('hidden');
-  } else {
-    panel.classList.add('hidden');
-  }
-}
-
-// ========== স্কোরবোর্ড রিফ্রেশ ==========
-function refreshBoard() {
-  updateScoreboard();
-  showToast('স্কোরবোর্ড রিফ্রেশ করা হয়েছে', 'info');
-}
-
-// ========== গেম শেষ ==========
-function endGame() {
-  if (!players.length) return;
-  openLeaderboard();
-  shootConfetti();
-}
-
-// ========== লিডারবোর্ড খুলুন ==========
-function openLeaderboard() {
-  if (!players.length) {
-    showToast('কোনো গেম ডাটা নেই', 'error');
-    return;
-  }
-  
-  const sorted = players.map((p, i) => ({
-    name: p,
-    score: totalScores[i],
-    stats: playerStats[i]
+// ========== গেম শেষ ফাংশন ==========
+function showGameEndModal() {
+  // বিজয়ী নির্ধারণ
+  const sortedPlayers = players.map((player, index) => ({
+    name: player,
+    score: totalScores[index],
+    index
   })).sort((a, b) => b.score - a.score);
   
-  const podium = document.getElementById('podiumContainer');
-  const list = document.getElementById('leaderboardList');
-  
-  // পোডিয়াম
-  podium.innerHTML = '';
-  for (let i = 0; i < Math.min(3, sorted.length); i++) {
-    const p = sorted[i];
-    const colors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-    const medals = ['🥇', '🥈', '🥉'];
+  // পোডিয়াম তৈরি
+  let podiumHtml = '';
+  for (let i = 0; i < Math.min(3, sortedPlayers.length); i++) {
+    const p = sortedPlayers[i];
+    const position = i === 0 ? 'first' : i === 1 ? 'second' : 'third';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉';
     
-    podium.innerHTML += `
-      <div class="podium-item">
-        <div class="podium-rank" style="background: ${colors[i]};">${medals[i]}</div>
+    podiumHtml += `
+      <div class="podium-item ${position}">
+        <div class="podium-rank">${medal}</div>
         <div class="podium-name">${p.name}</div>
         <div class="podium-score">${p.score.toFixed(1)}</div>
       </div>
     `;
   }
+  podiumContainer.innerHTML = podiumHtml;
   
-  // লিডারবোর্ড লিস্ট
-  list.innerHTML = '<h3 style="margin-bottom: 1rem;">ফাইনাল র‌্যাঙ্কিং</h3>';
-  
-  sorted.forEach((p, i) => {
-    const medal = i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
-    const color = i < 3 ? ['#FFD700', '#C0C0C0', '#CD7F32'][i] : 'var(--primary)';
-    
-    list.innerHTML += `
-      <div class="leaderboard-item">
-        <div class="leaderboard-rank" style="background: ${color};">${medal}</div>
-        <div class="leaderboard-info">
-          <span class="leaderboard-name">${p.name}</span>
-          <span class="leaderboard-score">${p.score.toFixed(1)}</span>
-        </div>
+  // সব প্লেয়ারের স্কোর
+  let scoresHtml = '';
+  sortedPlayers.forEach((p, i) => {
+    const position = i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : '';
+    scoresHtml += `
+      <div class="score-item ${position}">
+        <span class="score-rank">#${i+1}</span>
+        <span class="score-name">${p.name}</span>
+        <span class="score-points">${p.score.toFixed(1)}</span>
       </div>
     `;
   });
+  finalScoresList.innerHTML = scoresHtml;
   
-  document.getElementById('leaderboardModal').style.display = 'flex';
+  // ম্যাচ বিজয়ী বাজি চেক
+  checkMatchWinnerBets(sortedPlayers[0].index);
+  
+  gameEndModal.style.display = 'flex';
 }
 
-// ========== হিস্ট্রি খুলুন ==========
-function openHistory() {
-  if (roundHistory.length === 0) {
-    showToast('কোনো হিস্ট্রি নেই', 'error');
-    return;
-  }
-  
-  const container = document.getElementById('historyContainer');
-  container.innerHTML = '';
-  
-  roundHistory.slice().reverse().forEach((round, idx) => {
-    const div = document.createElement('div');
-    div.className = 'history-item';
-    
-    let html = `
-      <div class="history-round">
-        <i class="fas ${round.type === 'bonus' ? 'fa-gift' : 'fa-phone'}"></i>
-        রাউন্ড ${round.round} (${round.type === 'bonus' ? 'বোনাস' : 'কল'})
-      </div>
-    `;
-    
-    round.players.forEach(p => {
-      if (round.type === 'bonus') {
-        html += `
-          <div class="history-detail">
-            <span>${p.name}</span>
-            <span>উঠেছে: ${p.got} = +${p.score}</span>
-          </div>
-        `;
-      } else {
-        html += `
-          <div class="history-detail">
-            <span>${p.name}</span>
-            <span>কল: ${p.call}, উঠেছে: ${p.got} = ${p.score.toFixed(1)}</span>
-          </div>
-        `;
-      }
-    });
-    
-    div.innerHTML = html;
-    container.appendChild(div);
-  });
-  
-  document.getElementById('historyModal').style.display = 'flex';
+function closeGameEndModal() {
+  gameEndModal.style.display = 'none';
 }
 
-// ========== মডাল ক্লোজ ==========
-function closeLeaderboard() {
-  document.getElementById('leaderboardModal').style.display = 'none';
-}
-
-function closeHistory() {
-  document.getElementById('historyModal').style.display = 'none';
-}
-
-// ========== নতুন গেম ==========
-function newGame() {
+function startNewGame() {
+  // সব স্টেট রিসেট
   players = [];
   totalScores = [];
   playerStats = [];
   roundHistory = [];
   currentRound = 1;
   currentCallValues = [];
+  currentTrickValues = [];
+  gameCode = '';
   
-  localStorage.removeItem('breezeGame');
-  
-  document.getElementById('leaderboardModal').style.display = 'none';
+  // UI রিসেট
   gamePanel.classList.remove('active');
   setupPanel.classList.add('active');
+  mainGameCode.textContent = '----';
+  mainGameStatus.textContent = 'সেটআপ মোড';
+  mainRoundInfo.textContent = 'রাউন্ড ০';
   
-  document.querySelectorAll('.nav-item')[1].classList.remove('active');
-  document.querySelectorAll('.nav-item')[0].classList.add('active');
+  // মডাল বন্ধ
+  gameEndModal.style.display = 'none';
+  
+  // নাম ফিল্ড রি-জেনারেট
+  generateNameFields();
   
   showToast('নতুন গেম শুরু! সেটআপ করুন', 'success');
 }
 
-// ========== গেম সেভ/লোড ==========
-function saveGame() {
-  const state = {
-    players,
-    totalScores,
-    playerStats,
-    roundHistory,
-    currentRound,
-    currentCallValues
-  };
-  localStorage.setItem('breezeGame', JSON.stringify(state));
+function checkMatchWinnerBets(winnerIndex) {
+  activeBets.forEach(bet => {
+    if (bet.type === 'match' && bet.status === 'pending') {
+      if (bet.playerIndex === winnerIndex) {
+        bet.status = 'win';
+        const winAmount = bet.amount * bet.odds;
+        
+        const predictor = predictors.find(p => p.id === bet.predictorId);
+        if (predictor) {
+          predictor.cigarettes += winAmount;
+          predictor.wins++;
+          
+          addToBettingFeed({
+            ...bet,
+            time: new Date().toLocaleTimeString(),
+            result: `জিতেছেন ${winAmount.toFixed(1)} 🚬`
+          });
+        }
+      } else {
+        bet.status = 'lose';
+        const predictor = predictors.find(p => p.id === bet.predictorId);
+        if (predictor) {
+          predictor.losses++;
+        }
+      }
+    }
+  });
+  
+  updatePredictorsList();
+  updatePredictorHistory();
 }
 
-function loadGame() {
-  const saved = localStorage.getItem('breezeGame');
-  if (saved) {
-    try {
-      const state = JSON.parse(saved);
-      players = state.players || [];
-      totalScores = state.totalScores || [];
-      playerStats = state.playerStats || [];
-      roundHistory = state.roundHistory || [];
-      currentRound = state.currentRound || 1;
-      currentCallValues = state.currentCallValues || [];
+function shootConfetti() {
+  for (let i = 0; i < 100; i++) {
+    setTimeout(() => {
+      const confetti = document.createElement('div');
+      confetti.style.cssText = `
+        position: fixed;
+        left: ${Math.random() * 100}%;
+        top: -10px;
+        width: 8px;
+        height: 8px;
+        background: hsl(${Math.random() * 360}, 100%, 50%);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        animation: confettiFall ${Math.random() * 3 + 2}s linear;
+      `;
+      document.body.appendChild(confetti);
       
-      if (players.length > 0) {
-        setupPanel.classList.remove('active');
-        gamePanel.classList.add('active');
-        
-        if (currentRound === 1) {
-          showBonusRound();
-        } else {
-          roundTitle.innerHTML = '📞 কল রাউন্ড';
-          bonusArea.style.display = 'none';
-          callArea.style.display = 'block';
-          callPhase.classList.remove('hidden');
-          trickPhase.classList.add('hidden');
-          loadCallPhase();
-        }
-        
-        updateScoreboard();
-        showToast('গেম লোড করা হয়েছে', 'success');
-      }
-    } catch (e) {
-      console.error('লোড করতে সমস্যা:', e);
-    }
+      setTimeout(() => confetti.remove(), 5000);
+    }, i * 30);
   }
 }
 
-// ========== অটো সেভ ==========
-setInterval(() => {
-  if (players.length > 0) saveGame();
-}, 30000);
+// ========== প্রেডিকশন ফাংশন ==========
+
+function showPredictorSetup() {
+  predictorSetupModal.style.display = 'flex';
+}
+
+function setSetupCigarette(amount) {
+  document.getElementById('predictorCigaretteSetup').value = amount;
+}
+
+function savePredictorSetup() {
+  const name = document.getElementById('predictorNameInput').value.trim();
+  const cigarettes = parseFloat(document.getElementById('predictorCigaretteSetup').value);
+  
+  if (!name) {
+    showToast('নাম দিন!', 'error');
+    return;
+  }
+  
+  if (cigarettes < 1) {
+    showToast('সর্বনিম্ন ১ সিগারেট!', 'error');
+    return;
+  }
+  
+  currentPredictor = {
+    id: Date.now(),
+    name: name,
+    cigarettes: cigarettes,
+    bets: [],
+    wins: 0,
+    losses: 0
+  };
+  
+  predictors.push(currentPredictor);
+  
+  predictorCigarettes.textContent = currentPredictor.cigarettes.toFixed(1);
+  predictorCigaretteInput.value = '10';
+  currentCigaretteAmount = 10;
+  
+  closeModal('predictorSetupModal');
+  updatePredictorsList();
+  showToast(`${name} হিসেবে সেটআপ সম্পন্ন`, 'success');
+}
+
+function setCigaretteAmount(amount) {
+  if (currentPredictor && amount > currentPredictor.cigarettes) {
+    showToast('পর্যাপ্ত সিগারেট নেই!', 'error');
+    return;
+  }
+  
+  if (amount < 1) amount = 1;
+  if (amount > 20) amount = 20;
+  
+  currentCigaretteAmount = amount;
+  predictorCigaretteInput.value = amount.toFixed(1);
+}
+
+function setCustomCigaretteAmount() {
+  const input = document.getElementById('predictorCigaretteInput');
+  let amount = parseFloat(input.value);
+  
+  if (isNaN(amount) || amount < 1) {
+    showToast('সর্বনিম্ন ১ সিগারেট!', 'error');
+    input.value = 1;
+    currentCigaretteAmount = 1;
+    return;
+  }
+  
+  if (amount > 20) {
+    showToast('সর্বোচ্চ ২০ সিগারেট!', 'error');
+    input.value = 20;
+    currentCigaretteAmount = 20;
+    return;
+  }
+  
+  if (currentPredictor && amount > currentPredictor.cigarettes) {
+    showToast('পর্যাপ্ত সিগারেট নেই!', 'error');
+    input.value = currentPredictor.cigarettes;
+    currentCigaretteAmount = currentPredictor.cigarettes;
+    return;
+  }
+  
+  currentCigaretteAmount = amount;
+}
+
+function connectToGame() {
+  const code = document.getElementById('predictionGameCode').value.toUpperCase();
+  
+  if (code === gameCode) {
+    connectedGame = {
+      code: code,
+      players: players,
+      round: currentRound,
+      calls: currentCallValues,
+      scores: totalScores
+    };
+    
+    connectedGameInfo.style.display = 'flex';
+    connectedGameCode.textContent = code;
+    connectedPlayers.textContent = players.length;
+    connectedRound.textContent = currentRound;
+    
+    updateLiveGameView();
+    updatePredictionMarkets();
+    
+    showToast('গেমে কানেক্টেড!', 'success');
+  } else {
+    showToast('ভুল গেম কোড!', 'error');
+  }
+}
+
+function updateConnectedGameData() {
+  if (!connectedGame) return;
+  
+  connectedGame.players = players;
+  connectedGame.round = currentRound;
+  connectedGame.calls = currentCallValues;
+  
+  connectedPlayers.textContent = players.length;
+  connectedRound.textContent = currentRound;
+  
+  updateLiveGameView();
+  updatePredictionMarkets();
+}
+
+function updateLiveGameView() {
+  if (!connectedGame || !liveGamePlayers) return;
+  
+  let html = '';
+  
+  players.forEach((player, i) => {
+    html += `
+      <div class="live-player-card">
+        <span class="player-name">${player}</span>
+        <span class="player-call">${currentCallValues[i] || '০'}</span>
+      </div>
+    `;
+  });
+  
+  liveGamePlayers.innerHTML = html;
+}
+
+function updatePredictionMarkets() {
+  if (!connectedGame) return;
+  
+  const avatars = ['👑', '⚡', '🌟', '🔥', '💎', '🎯'];
+  
+  roundMarket.innerHTML = '';
+  players.forEach((player, i) => {
+    const odds = (players.length * 1.2).toFixed(2);
+    roundMarket.innerHTML += `
+      <div class="market-item" onclick="openBetModal('round', ${i}, '${player}', 'এই রাউন্ডের বিজয়ী', ${odds})">
+        <div class="market-item-left">
+          <span class="market-player-avatar">${avatars[i]}</span>
+          <span>${player}</span>
+        </div>
+        <div class="market-item-right">
+          <span class="market-odds-value">${odds}x</span>
+          <button class="bet-now-btn">বাজি</button>
+        </div>
+      </div>
+    `;
+  });
+  
+  exactCallMarket.innerHTML = '';
+  players.forEach((player, i) => {
+    exactCallMarket.innerHTML += `
+      <div class="market-item" onclick="openBetModal('exact', ${i}, '${player}', 'সঠিক কল উঠবে', 5.0)">
+        <div class="market-item-left">
+          <span class="market-player-avatar">${avatars[i]}</span>
+          <span>${player}</span>
+        </div>
+        <div class="market-item-right">
+          <span class="market-odds-value">৫.০x</span>
+          <button class="bet-now-btn">বাজি</button>
+        </div>
+      </div>
+    `;
+  });
+  
+  overUnderMarket.innerHTML = '';
+  players.forEach((player, i) => {
+    overUnderMarket.innerHTML += `
+      <div class="market-item" onclick="openBetModal('over', ${i}, '${player}', 'কলের বেশি উঠবে', 3.0)">
+        <div class="market-item-left">
+          <span class="market-player-avatar">${avatars[i]}</span>
+          <span>${player} - বেশি</span>
+        </div>
+        <div class="market-item-right">
+          <span class="market-odds-value">৩.০x</span>
+          <button class="bet-now-btn">বাজি</button>
+        </div>
+      </div>
+      <div class="market-item" onclick="openBetModal('under', ${i}, '${player}', 'কলের কম উঠবে', 4.0)">
+        <div class="market-item-left">
+          <span class="market-player-avatar">${avatars[i]}</span>
+          <span>${player} - কম</span>
+        </div>
+        <div class="market-item-right">
+          <span class="market-odds-value">৪.০x</span>
+          <button class="bet-now-btn">বাজি</button>
+        </div>
+      </div>
+    `;
+  });
+  
+  matchWinnerMarket.innerHTML = '';
+  players.forEach((player, i) => {
+    const odds = (players.length * 1.5).toFixed(2);
+    matchWinnerMarket.innerHTML += `
+      <div class="market-item" onclick="openBetModal('match', ${i}, '${player}', 'পুরো গেমের বিজয়ী', ${odds})">
+        <div class="market-item-left">
+          <span class="market-player-avatar">${avatars[i]}</span>
+          <span>${player}</span>
+        </div>
+        <div class="market-item-right">
+          <span class="market-odds-value">${odds}x</span>
+          <button class="bet-now-btn">বাজি</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+let currentBetSelection = null;
+
+function openBetModal(type, playerIndex, playerName, description, odds) {
+  if (!currentPredictor) {
+    showToast('প্রথমে প্রেডিক্টর সেটআপ করুন!', 'error');
+    predictorSetupModal.style.display = 'flex';
+    return;
+  }
+  
+  currentBetSelection = {
+    type: type,
+    playerIndex: playerIndex,
+    playerName: playerName,
+    description: description,
+    odds: parseFloat(odds)
+  };
+  
+  modalBetDetails.innerHTML = `
+    <div style="font-size: 1.1rem; margin-bottom: 10px;">${description}</div>
+    <div style="color: var(--accent); font-size: 1.2rem; margin-bottom: 10px;">ওডস: ${odds}x</div>
+    <div style="background: var(--card-bg); padding: 10px; border-radius: 10px; border: 1px solid var(--border-color);">
+      <div style="margin-bottom: 5px;">আপনার বাজি: <span style="color: var(--accent); font-weight: 700;">${currentCigaretteAmount}</span> সিগারেট</div>
+      <div>সর্বনিম্ন: ১ | সর্বোচ্চ: ২০</div>
+    </div>
+  `;
+  
+  const potentialWin = (currentCigaretteAmount * parseFloat(odds)).toFixed(1);
+  modalPotentialWin.innerHTML = `<span style="color: #4caf50; font-size: 1.3rem;">${potentialWin}</span> সিগারেট`;
+  
+  betModal.style.display = 'flex';
+}
+
+function confirmBet() {
+  if (!currentPredictor || !currentBetSelection) return;
+  
+  if (currentCigaretteAmount > currentPredictor.cigarettes) {
+    showToast('পর্যাপ্ত সিগারেট নেই!', 'error');
+    closeModal('betModal');
+    return;
+  }
+  
+  const bet = {
+    id: Date.now(),
+    predictorId: currentPredictor.id,
+    predictorName: currentPredictor.name,
+    type: currentBetSelection.type,
+    playerIndex: currentBetSelection.playerIndex,
+    playerName: currentBetSelection.playerName,
+    description: currentBetSelection.description,
+    amount: currentCigaretteAmount,
+    odds: currentBetSelection.odds,
+    round: currentRound,
+    status: 'pending',
+    timestamp: new Date().toLocaleTimeString()
+  };
+  
+  activeBets.push(bet);
+  currentPredictor.bets.push(bet);
+  currentPredictor.cigarettes -= currentCigaretteAmount;
+  
+  totalPool += currentCigaretteAmount;
+  
+  addToBettingFeed(bet);
+  
+  predictorCigarettes.textContent = currentPredictor.cigarettes.toFixed(1);
+  updateBetSlip();
+  updatePredictorsList();
+  
+  closeModal('betModal');
+  showToast('বাজি সফলভাবে যোগ হয়েছে!', 'success');
+}
+
+function addToBettingFeed(bet) {
+  const feedItem = {
+    ...bet,
+    time: new Date().toLocaleTimeString()
+  };
+  
+  bettingFeed.unshift(feedItem);
+  
+  if (bettingFeed.length > 20) {
+    bettingFeed.pop();
+  }
+  
+  updateBettingFeed();
+}
+
+function updateBettingFeed() {
+  let html = '';
+  
+  bettingFeed.forEach(item => {
+    html += `
+      <div class="feed-item">
+        <span class="feed-time">${item.time}</span>
+        <span class="feed-predictor">${item.predictorName}</span>
+        <span>বাজি ধরেছেন</span>
+        <span class="feed-bet">${item.amount} 🚬</span>
+        <span>অন</span>
+        <span>${item.playerName}</span>
+        ${item.result ? `<span style="color: #4caf50;">${item.result}</span>` : ''}
+      </div>
+    `;
+  });
+  
+  bettingFeedContainer.innerHTML = html;
+  totalBetsCount.textContent = `${activeBets.length}টি বাজি`;
+}
+
+function updateBetSlip() {
+  if (!currentPredictor) return;
+  
+  const pendingBets = currentPredictor.bets.filter(b => b.status === 'pending');
+  
+  if (pendingBets.length === 0) {
+    betSlipItems.innerHTML = '<div class="empty-slip">কোনো বাজি নেই</div>';
+    totalBetAmount.textContent = '০';
+    return;
+  }
+  
+  let html = '';
+  let total = 0;
+  
+  pendingBets.forEach((bet, index) => {
+    total += bet.amount;
+    html += `
+      <div class="slip-item">
+        <span>${bet.playerName} - ${bet.amount} 🚬</span>
+        <span class="slip-remove" onclick="removeBet(${index})">✕</span>
+      </div>
+    `;
+  });
+  
+  betSlipItems.innerHTML = html;
+  totalBetAmount.textContent = total.toFixed(1);
+}
+
+function removeBet(index) {
+  if (!currentPredictor) return;
+  
+  const bet = currentPredictor.bets[index];
+  currentPredictor.cigarettes += bet.amount;
+  currentPredictor.bets.splice(index, 1);
+  
+  predictorCigarettes.textContent = currentPredictor.cigarettes.toFixed(1);
+  updateBetSlip();
+}
+
+function placeBets() {
+  if (!currentPredictor || currentPredictor.bets.length === 0) {
+    showToast('কোনো বাজি নেই!', 'error');
+    return;
+  }
+  
+  showToast('বাজি জমা হয়েছে! ফলাফলের জন্য অপেক্ষা করুন', 'success');
+}
+
+function checkBetResults(round) {
+  if (!connectedGame || activeBets.length === 0) return;
+  
+  const roundBets = activeBets.filter(b => b.round === round && b.status === 'pending');
+  
+  if (roundBets.length === 0) return;
+  
+  const winners = [];
+  const losers = [];
+  
+  roundBets.forEach(bet => {
+    let won = false;
+    
+    if (bet.type === 'round') {
+      const maxTrick = Math.max(...currentTrickValues);
+      const winnersCount = currentTrickValues.filter(v => v === maxTrick).length;
+      
+      if (currentTrickValues[bet.playerIndex] === maxTrick && winnersCount === 1) {
+        won = true;
+      }
+    } else if (bet.type === 'exact') {
+      if (currentCallValues[bet.playerIndex] === currentTrickValues[bet.playerIndex]) {
+        won = true;
+      }
+    } else if (bet.type === 'over') {
+      if (currentTrickValues[bet.playerIndex] > currentCallValues[bet.playerIndex]) {
+        won = true;
+      }
+    } else if (bet.type === 'under') {
+      if (currentTrickValues[bet.playerIndex] < currentCallValues[bet.playerIndex]) {
+        won = true;
+      }
+    }
+    
+    if (won) {
+      winners.push(bet);
+    } else {
+      losers.push(bet);
+    }
+  });
+  
+  const totalPool = roundBets.reduce((sum, bet) => sum + bet.amount, 0);
+  
+  if (winners.length > 0) {
+    const winAmount = totalPool / winners.length;
+    
+    winners.forEach(bet => {
+      bet.status = 'win';
+      
+      const predictor = predictors.find(p => p.id === bet.predictorId);
+      if (predictor) {
+        predictor.cigarettes += winAmount;
+        predictor.wins++;
+        
+        addToBettingFeed({
+          ...bet,
+          time: new Date().toLocaleTimeString(),
+          result: `জিতেছেন ${winAmount.toFixed(1)} 🚬`
+        });
+      }
+    });
+  }
+  
+  losers.forEach(bet => {
+    bet.status = 'lose';
+    const predictor = predictors.find(p => p.id === bet.predictorId);
+    if (predictor) {
+      predictor.losses++;
+    }
+  });
+  
+  updatePredictorsList();
+  updatePredictorHistory();
+}
+
+function updatePredictorsList() {
+  let html = '';
+  
+  predictors.forEach(p => {
+    const totalBets = p.bets.filter(b => b.status === 'pending').reduce((sum, b) => sum + b.amount, 0);
+    html += `
+      <div class="predictor-tag">
+        <div class="predictor-tag-left">
+          <i class="fas fa-user"></i>
+          <span class="predictor-name">${p.name}</span>
+        </div>
+        <div>
+          <span class="predictor-bet-amount">${totalBets.toFixed(1)}</span>
+          <span>🚬</span>
+        </div>
+      </div>
+    `;
+  });
+  
+  predictorsList.innerHTML = html;
+}
+
+function updatePredictorHistory() {
+  if (!currentPredictor) return;
+  
+  let html = '';
+  
+  currentPredictor.bets.slice(-5).reverse().forEach(b => {
+    const statusClass = b.status === 'win' ? 'win' : b.status === 'lose' ? 'lose' : 'pending';
+    const statusText = b.status === 'win' ? '✅ জিতেছে' : b.status === 'lose' ? '❌ হেরেছে' : '⏳ অপেক্ষায়';
+    
+    html += `
+      <div class="history-item ${statusClass}">
+        <span>${b.playerName}</span>
+        <span>${b.amount} 🚬</span>
+        <span class="history-status">${statusText}</span>
+      </div>
+    `;
+  });
+  
+  predictorHistoryList.innerHTML = html;
+}
+
+function updatePredictionUI() {
+  if (connectedGame) {
+    updateConnectedGameData();
+  }
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+}
+
+// ========== টোস্ট ফাংশন ==========
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  
+  toastContainer.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
 
 // ========== উইন্ডো লোড ==========
 window.onload = function() {
   // থিম লোড
-  const savedTheme = localStorage.getItem('breezeTheme') || 'pro';
+  const savedTheme = localStorage.getItem('breezeTheme') || 'neon';
   setTheme(savedTheme);
   
-  // পার্টিকেল তৈরি
-  createParticles();
-  
-  // ডিফল্ট নাম ফিল্ড
   generateNameFields();
-  
-  // গেম লোড
-  loadGame();
-  
-  // কীবোর্ড শর্টকাট
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeLeaderboard();
-      closeHistory();
-    }
-  });
+  predictorCigarettes.textContent = '০';
 };
 
 // ========== গ্লোবাল ফাংশন ==========
-window.switchPanel = switchPanel;
 window.setTheme = setTheme;
-window.adjustCount = adjustCount;
+window.switchMainTab = switchMainTab;
+window.adjustPlayerCount = adjustPlayerCount;
 window.generateNameFields = generateNameFields;
 window.startBonusRound = startBonusRound;
 window.submitBonusRound = submitBonusRound;
 window.submitCallPhase = submitCallPhase;
 window.submitTrickPhase = submitTrickPhase;
-window.endGame = endGame;
-window.openLeaderboard = openLeaderboard;
-window.closeLeaderboard = closeLeaderboard;
-window.openHistory = openHistory;
-window.closeHistory = closeHistory;
-window.newGame = newGame;
-window.toggleStats = toggleStats;
-window.refreshBoard = refreshBoard;
+window.copyMainGameCode = copyMainGameCode;
+window.showGameEndModal = showGameEndModal;
+window.closeGameEndModal = closeGameEndModal;
+window.startNewGame = startNewGame;
+window.updateCallValue = updateCallValue;
+window.updateTrickValue = updateTrickValue;
+
+window.showPredictorSetup = showPredictorSetup;
+window.setSetupCigarette = setSetupCigarette;
+window.savePredictorSetup = savePredictorSetup;
+window.setCigaretteAmount = setCigaretteAmount;
+window.setCustomCigaretteAmount = setCustomCigaretteAmount;
+window.connectToGame = connectToGame;
+window.openBetModal = openBetModal;
+window.confirmBet = confirmBet;
+window.placeBets = placeBets;
+window.removeBet = removeBet;
+window.closeModal = closeModal;
