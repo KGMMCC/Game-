@@ -3,312 +3,402 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Call Breeze Pro v5.0 | আল্ট্রা প্রিমিয়াম কল ব্রিজ</title>
+  <title>Call Breeze Pro v9.0 · আলটিমেট এডিশন</title>
   
-  <!-- ফন্ট & আইকন -->
+  <!-- ফন্ট -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
-  <!-- কাস্টম CSS -->
+  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-pro">
-  <!-- অ্যানিমেটেড ব্যাকগ্রাউন্ড -->
-  <div class="gradient-bg">
-    <div class="gradient-1"></div>
-    <div class="gradient-2"></div>
-    <div class="gradient-3"></div>
+<body class="theme-neon">
+  <!-- থিম সুইচার -->
+  <div class="theme-switcher-float">
+    <button class="theme-btn" onclick="setTheme('neon')" title="নিয়ন মোড">💎</button>
+    <button class="theme-btn" onclick="setTheme('day')" title="ডে মোড">☀️</button>
+    <button class="theme-btn" onclick="setTheme('night')" title="নাইট মোড">🌙</button>
   </div>
 
-  <!-- পার্টিকেল ইফেক্ট -->
-  <div id="particles" class="particles"></div>
+  <div class="app-container">
+    
+    <!-- ===== ট্যাব নেভিগেশন ===== -->
+    <div class="main-tabs">
+      <div class="tab-container">
+        <button class="tab-btn active" onclick="switchMainTab('game')">
+          <i class="fas fa-gamepad"></i>
+          <span>কল ব্রীজ গেম</span>
+        </button>
+        <button class="tab-btn" onclick="switchMainTab('prediction')">
+          <i class="fas fa-chart-line"></i>
+          <span>প্রেডিকশন অ্যারেনা</span>
+          <span class="live-badge">লাইভ</span>
+        </button>
+      </div>
+    </div>
 
-  <div class="app-wrapper">
-    <!-- সাইডবার -->
-    <aside class="sidebar">
-      <div class="sidebar-inner">
-        <!-- লোগো -->
-        <div class="logo-container">
-          <div class="logo-icon">
-            <i class="fas fa-wind"></i>
-          </div>
-          <div class="logo-text">
-            <span class="logo-main">Call Breeze</span>
-            <span class="logo-badge">PRO v5.0</span>
-          </div>
+    <!-- ===== গেম ট্যাব ===== -->
+    <div id="gameTab" class="tab-content active">
+      <!-- গেম হেডার -->
+      <div class="game-header">
+        <div class="logo-area">
+          <i class="fas fa-wind"></i>
+          <h1>Call Breeze <span class="pro-badge">PRO v9.0</span></h1>
         </div>
-
-        <!-- নেভিগেশন মেনু -->
-        <nav class="sidebar-nav">
-          <div class="nav-item active" onclick="switchPanel('setup')">
-            <i class="fas fa-users"></i>
-            <span>সেটআপ</span>
-            <div class="nav-indicator"></div>
-          </div>
-          <div class="nav-item" onclick="switchPanel('game')">
-            <i class="fas fa-gamepad"></i>
-            <span>গেম</span>
-            <div class="nav-indicator"></div>
-          </div>
-          <div class="nav-item" onclick="openLeaderboard()">
-            <i class="fas fa-trophy"></i>
-            <span>লিডারবোর্ড</span>
-            <div class="nav-indicator"></div>
-          </div>
-          <div class="nav-item" onclick="openHistory()">
-            <i class="fas fa-clock-rotate-left"></i>
-            <span>হিস্ট্রি</span>
-            <div class="nav-indicator"></div>
-          </div>
-        </nav>
-
-        <!-- থিম সুইচার ও ফুটার -->
-        <div class="sidebar-footer">
-          <div class="theme-selector">
-            <button class="theme-option active" onclick="setTheme('pro')" title="প্রো থিম">
-              <i class="fas fa-gem"></i>
-            </button>
-            <button class="theme-option" onclick="setTheme('dark')" title="ডার্ক থিম">
-              <i class="fas fa-moon"></i>
-            </button>
-            <button class="theme-option" onclick="setTheme('light')" title="লাইট থিম">
-              <i class="fas fa-sun"></i>
+        
+        <div class="header-right">
+          <!-- গেম কোড ডিসপ্লে -->
+          <div class="game-code-container">
+            <span class="code-label">গেম কোড</span>
+            <span class="code-value" id="mainGameCode">----</span>
+            <button class="copy-btn" onclick="copyMainGameCode()">
+              <i class="fas fa-copy"></i>
             </button>
           </div>
-          <div class="version-info">
-            <i class="fas fa-code-branch"></i>
-            <span>v5.0.0 · প্রিমিয়াম</span>
-          </div>
+          
+          <!-- গেম শেষ বাটন -->
+          <button class="btn-danger" onclick="showGameEndModal()">
+            <i class="fas fa-flag-checkered"></i>
+            গেম শেষ
+          </button>
         </div>
       </div>
-    </aside>
 
-    <!-- মেইন কন্টেন্ট এরিয়া -->
-    <main class="main-area">
+      <!-- স্ট্যাটাস বার -->
+      <div class="status-bar">
+        <div class="status-info">
+          <i class="fas fa-circle" style="color: #4caf50;"></i>
+          <span id="mainGameStatus">সেটআপ মোড</span>
+        </div>
+        <div class="round-info" id="mainRoundInfo">রাউন্ড ০</div>
+      </div>
+
       <!-- সেটআপ প্যানেল -->
       <div id="setupPanel" class="panel active">
-        <div class="panel-header">
-          <div class="header-title">
-            <i class="fas fa-users-gear"></i>
-            <h2>খেলোয়াড় সেটআপ</h2>
-          </div>
-          <div class="header-badge pulse-animation">
-            <i class="fas fa-user-plus"></i>
-            <span>২-৬ প্লেয়ার</span>
-          </div>
+        <div class="panel-title">
+          <i class="fas fa-users-gear"></i>
+          <h2>খেলোয়াড় সেটআপ</h2>
         </div>
-
-        <div class="panel-content">
-          <div class="setup-card glass-card">
-            <div class="input-group">
-              <label>
-                <i class="fas fa-hashtag"></i>
-                <span>প্লেয়ার সংখ্যা</span>
-              </label>
-              <div class="counter-input">
-                <button class="counter-btn" onclick="adjustCount(-1)">
-                  <i class="fas fa-minus"></i>
-                </button>
-                <input type="number" id="playerCount" class="count-field" value="4" min="2" max="6" readonly>
-                <button class="counter-btn" onclick="adjustCount(1)">
-                  <i class="fas fa-plus"></i>
-                </button>
-              </div>
-            </div>
-
-            <button class="btn-primary btn-block" onclick="generateNameFields()">
-              <i class="fas fa-pen"></i>
-              <span>নামের ফিল্ড তৈরি করুন</span>
-            </button>
-
-            <div id="nameFieldsContainer" class="name-fields-grid"></div>
-
-            <button class="btn-success btn-block btn-large" onclick="startBonusRound()">
-              <i class="fas fa-play"></i>
-              <span>বোনাস রাউন্ড শুরু</span>
-            </button>
-
-            <div class="info-message">
-              <i class="fas fa-info-circle"></i>
-              <p>বোনাস রাউন্ডে কোন কল নেই, শুধু উঠানো সংখ্যা যোগ হবে</p>
+        
+        <div class="setup-content">
+          <div class="input-group">
+            <label>খেলোয়াড় সংখ্যা (২-৬)</label>
+            <div class="counter-box">
+              <button class="counter-btn" onclick="adjustPlayerCount(-1)">−</button>
+              <input type="number" id="playerCount" value="4" min="2" max="6" readonly>
+              <button class="counter-btn" onclick="adjustPlayerCount(1)">+</button>
             </div>
           </div>
+
+          <button class="btn-primary" onclick="generateNameFields()">
+            <i class="fas fa-pen"></i> নামের ফিল্ড তৈরি
+          </button>
+
+          <div id="nameFields" class="name-grid"></div>
+
+          <button class="btn-success btn-large" onclick="startBonusRound()">
+            <i class="fas fa-play"></i> গেম শুরু করুন
+          </button>
         </div>
       </div>
 
       <!-- গেম প্যানেল -->
       <div id="gamePanel" class="panel">
-        <div class="panel-header">
-          <div class="header-title">
-            <i class="fas fa-dice-d6"></i>
-            <h2 id="roundTitle">বোনাস রাউন্ড</h2>
-          </div>
-          <div class="header-actions">
-            <div class="round-counter">
-              <span class="round-current" id="currentRound">১</span>
-              <span class="round-separator">/</span>
-              <span class="round-total" id="totalRounds">?</span>
-            </div>
-            <button class="btn-danger btn-icon" onclick="endGame()" title="গেম শেষ">
-              <i class="fas fa-flag-checkered"></i>
-            </button>
-          </div>
-        </div>
-
-        <!-- লাইভ স্ট্যাটাস বার -->
-        <div class="status-bar" id="statusBar">
-          <div class="status-icon">
-            <i class="fas fa-circle-play"></i>
-          </div>
-          <div class="status-text" id="statusText">বোনাস রাউন্ড চলছে</div>
-          <div class="status-phase" id="statusPhase">🎁</div>
-        </div>
-
-        <!-- বোনাস রাউন্ড এরিয়া -->
+        <!-- বোনাস রাউন্ড -->
         <div id="bonusArea" class="game-area">
           <div class="area-header">
-            <h3>
-              <i class="fas fa-gift"></i>
-              বোনাস রাউন্ড
-            </h3>
+            <i class="fas fa-gift"></i>
+            <h3>বোনাস রাউন্ড</h3>
           </div>
           <div id="bonusPlayersGrid" class="players-grid"></div>
-          <button class="btn-gold btn-block btn-large" onclick="submitBonusRound()">
-            <i class="fas fa-check-double"></i>
-            <span>বোনাস রাউন্ড জমা দিন</span>
+          <button class="btn-gold btn-block" onclick="submitBonusRound()">
+            <i class="fas fa-check"></i> বোনাস সাবমিট
           </button>
         </div>
 
-        <!-- কল রাউন্ড এরিয়া -->
-        <div id="callArea" class="game-area">
+        <!-- কল রাউন্ড -->
+        <div id="callArea" class="game-area" style="display: none;">
           <!-- কল ফেজ -->
-          <div id="callPhase" class="game-phase">
-            <div class="phase-indicator">
-              <span class="phase-name">কল ফেজ</span>
+          <div id="callPhase" class="phase">
+            <div class="phase-header">
+              <span class="phase-name">📞 কল ফেজ</span>
               <span class="phase-step">১/২</span>
             </div>
             <div id="callPlayersGrid" class="players-grid"></div>
-            <button class="btn-primary btn-block btn-large" onclick="submitCallPhase()">
-              <i class="fas fa-phone"></i>
-              <span>কল সাবমিট করুন</span>
+            <button class="btn-primary btn-block" onclick="submitCallPhase()">
+              <i class="fas fa-check"></i> কল সাবমিট
             </button>
           </div>
 
           <!-- ট্রিক ফেজ -->
-          <div id="trickPhase" class="game-phase hidden">
-            <div class="phase-indicator">
-              <span class="phase-name">ট্রিক ফেজ</span>
+          <div id="trickPhase" class="phase" style="display: none;">
+            <div class="phase-header">
+              <span class="phase-name">🎯 ট্রিক ফেজ</span>
               <span class="phase-step">২/২</span>
             </div>
             <div id="trickPlayersGrid" class="players-grid"></div>
-            <button class="btn-purple btn-block btn-large" onclick="submitTrickPhase()">
-              <i class="fas fa-hand-peace"></i>
-              <span>ট্রিক সাবমিট করুন</span>
+            <button class="btn-purple btn-block" onclick="submitTrickPhase()">
+              <i class="fas fa-check"></i> ট্রিক সাবমিট
             </button>
           </div>
         </div>
 
-        <!-- স্কোরবোর্ড -->
-        <div class="scoreboard-section">
-          <div class="scoreboard-header">
-            <h4>
-              <i class="fas fa-chart-line"></i>
-              লাইভ স্কোরবোর্ড
-            </h4>
-            <div class="scoreboard-actions">
-              <button class="action-btn" onclick="toggleStats()" title="পরিসংখ্যান">
-                <i class="fas fa-chart-pie"></i>
-              </button>
-              <button class="action-btn" onclick="refreshBoard()" title="রিফ্রেশ">
-                <i class="fas fa-rotate"></i>
-              </button>
+        <!-- স্কোর টেবিল -->
+        <div class="score-section">
+          <h4><i class="fas fa-chart-line"></i> লাইভ স্কোরবোর্ড</h4>
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th>প্লেয়ার</th>
+                <th>কল</th>
+                <th>ট্রিক</th>
+                <th>মোট</th>
+              </tr>
+            </thead>
+            <tbody id="scoreTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== প্রেডিকশন ট্যাব ===== -->
+    <div id="predictionTab" class="tab-content">
+      <div class="prediction-container">
+        <!-- প্রেডিকশন হেডার -->
+        <div class="prediction-header">
+          <div class="header-left">
+            <i class="fas fa-chart-simple"></i>
+            <h2>প্রেডিকশন অ্যারেনা</h2>
+          </div>
+          
+          <!-- প্রেডিক্টর সেটআপ -->
+          <div class="predictor-setup">
+            <div class="predictor-balance" id="predictorBalance">
+              <i class="fas fa-smoking"></i>
+              <span id="predictorCigarettes">০</span>
             </div>
+            <button class="btn-neon-small" onclick="showPredictorSetup()">
+              <i class="fas fa-plus"></i> সেটআপ
+            </button>
+          </div>
+        </div>
+
+        <!-- গেম কানেক্ট বক্স -->
+        <div class="connect-box">
+          <div class="input-with-button">
+            <input type="text" id="predictionGameCode" placeholder="গেম কোড দিন" maxlength="6">
+            <button class="btn-neon" onclick="connectToGame()">
+              <i class="fas fa-link"></i> কানেক্ট
+            </button>
+          </div>
+        </div>
+
+        <!-- কানেক্টেড গেম তথ্য -->
+        <div id="connectedGameInfo" class="connected-game-info" style="display: none;">
+          <div class="game-badge">
+            <i class="fas fa-circle" style="color: #4caf50;"></i>
+            <span id="connectedGameCode">CALL42</span>
+          </div>
+          <div class="game-meta">
+            <span><i class="fas fa-users"></i> <span id="connectedPlayers">০</span></span>
+            <span><i class="fas fa-layer-group"></i> রাউন্ড <span id="connectedRound">১</span></span>
+          </div>
+        </div>
+
+        <!-- লাইভ গেম ভিউ -->
+        <div class="live-game-view">
+          <h3><i class="fas fa-satellite-dish"></i> লাইভ গেম ভিউ</h3>
+          <div id="liveGamePlayers" class="live-players-grid"></div>
+        </div>
+
+        <!-- প্রেডিকশন মার্কেট -->
+        <div class="prediction-markets">
+          <h3><i class="fas fa-chart-simple"></i> একটিভ মার্কেট</h3>
+          
+          <!-- রাউন্ড প্রেডিকশন -->
+          <div class="market-category">
+            <div class="category-title">
+              <span>এই রাউন্ডের বিজয়ী</span>
+              <span class="market-odds">ওডস</span>
+            </div>
+            <div id="roundMarket" class="market-items"></div>
           </div>
 
-          <div class="table-wrapper">
-            <table class="score-table">
-              <thead>
-                <tr>
-                  <th>প্লেয়ার</th>
-                  <th>মোট</th>
-                  <th>সঠিক</th>
-                  <th>বোনাস</th>
-                  <th>ফর্ম</th>
-                </tr>
-              </thead>
-              <tbody id="scoreboardBody"></tbody>
-            </table>
+          <!-- সঠিক কল মার্কেট -->
+          <div class="market-category">
+            <div class="category-title">
+              <span>সঠিক কল উঠবে?</span>
+              <span class="market-odds">ওডস</span>
+            </div>
+            <div id="exactCallMarket" class="market-items"></div>
           </div>
 
-          <!-- স্ট্যাটস প্যানেল -->
-          <div id="statsPanel" class="stats-panel hidden">
-            <h5>
-              <i class="fas fa-chart-simple"></i>
-              রাউন্ড পরিসংখ্যান
-            </h5>
-            <div id="statsGrid" class="stats-grid"></div>
+          <!-- কম/বেশি মার্কেট -->
+          <div class="market-category">
+            <div class="category-title">
+              <span>কলের তুলনায়</span>
+              <span class="market-odds">ওডস</span>
+            </div>
+            <div id="overUnderMarket" class="market-items"></div>
+          </div>
+
+          <!-- ম্যাচ বিজয়ী মার্কেট -->
+          <div class="market-category">
+            <div class="category-title">
+              <span>পুরো গেমের বিজয়ী</span>
+              <span class="market-odds">ওডস</span>
+            </div>
+            <div id="matchWinnerMarket" class="market-items"></div>
+          </div>
+        </div>
+
+        <!-- লাইভ বেটিং ফিড -->
+        <div class="live-betting-feed">
+          <div class="feed-header">
+            <h3><i class="fas fa-fire"></i> লাইভ বেটিং ফিড</h3>
+            <span class="bet-counter" id="totalBetsCount">০টি বাজি</span>
+          </div>
+          <div id="bettingFeed" class="betting-feed"></div>
+        </div>
+
+        <!-- প্রেডিক্টর লিস্ট ও বেট স্লিপ -->
+        <div class="prediction-bottom">
+          <!-- একটিভ প্রেডিক্টর লিস্ট -->
+          <div class="active-predictors">
+            <h4><i class="fas fa-users-viewfinder"></i> একটিভ প্রেডিক্টর</h4>
+            <div id="predictorsList" class="predictors-list"></div>
+          </div>
+
+          <!-- বেট স্লিপ -->
+          <div class="bet-slip">
+            <h4><i class="fas fa-receipt"></i> আপনার বেট স্লিপ</h4>
+            
+            <!-- সিগারেট সিলেক্টর -->
+            <div class="cigarette-pool">
+              <label>সিগারেট সংখ্যা (১-২০):</label>
+              <div class="cigarette-input-group">
+                <input type="number" id="predictorCigaretteInput" value="10" min="1" max="20" step="1" onchange="setCustomCigaretteAmount()">
+                <div class="cigarette-quick">
+                  <button onclick="setCigaretteAmount(1)">১</button>
+                  <button onclick="setCigaretteAmount(2)">২</button>
+                  <button onclick="setCigaretteAmount(5)">৫</button>
+                  <button onclick="setCigaretteAmount(10)">১০</button>
+                  <button onclick="setCigaretteAmount(15)">১৫</button>
+                  <button onclick="setCigaretteAmount(20)">২০</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="betSlipItems" class="slip-items"></div>
+            
+            <div class="slip-total">
+              <span>মোট বাজি:</span>
+              <span id="totalBetAmount">০</span>
+            </div>
+
+            <button class="btn-neon btn-block" onclick="placeBets()">
+              <i class="fas fa-check"></i> বাজি জমা দিন
+            </button>
+          </div>
+        </div>
+
+        <!-- প্রেডিক্টর হিস্ট্রি -->
+        <div class="predictor-history-section">
+          <h3><i class="fas fa-clock-rotate-left"></i> আপনার প্রেডিকশন হিস্ট্রি</h3>
+          <div id="predictorHistoryList" class="history-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- গেম শেষ মডাল (পোডিয়াম সহ) -->
+  <div id="gameEndModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-trophy"></i> গেম শেষ - ফলাফল</h2>
+        <button class="modal-close" onclick="closeGameEndModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- পোডিয়াম -->
+        <div class="podium-container" id="podiumContainer"></div>
+        
+        <!-- বিস্তারিত স্কোর -->
+        <div class="final-scores">
+          <h3>সব প্লেয়ারের স্কোর</h3>
+          <div id="finalScoresList" class="scores-list"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-success" onclick="startNewGame()">
+          <i class="fas fa-plus-circle"></i> নতুন গেম শুরু
+        </button>
+        <button class="btn-neon" onclick="closeGameEndModal()">
+          <i class="fas fa-arrow-left"></i> গেমে ফিরুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- বেট কনফার্মেশন মডাল -->
+  <div id="betModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>বাজি নিশ্চিত করুন</h3>
+        <button class="modal-close" onclick="closeModal('betModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="modalBetDetails"></p>
+        <div class="modal-potential">
+          <span>সম্ভাব্য জয়:</span>
+          <span id="modalPotentialWin">০</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-neon" onclick="confirmBet()">
+          <i class="fas fa-check"></i> নিশ্চিত করুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- প্রেডিক্টর সেটআপ মডাল -->
+  <div id="predictorSetupModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>প্রেডিক্টর সেটআপ</h3>
+        <button class="modal-close" onclick="closeModal('predictorSetupModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="setup-form">
+          <div class="form-group">
+            <label>আপনার নাম</label>
+            <input type="text" id="predictorNameInput" placeholder="নাম দিন">
+          </div>
+          <div class="form-group">
+            <label>সিগারেট সংখ্যা (১-১০০)</label>
+            <input type="number" id="predictorCigaretteSetup" value="20" min="1" max="100" step="1">
+            <div class="setup-quick">
+              <button onclick="setSetupCigarette(10)">১০</button>
+              <button onclick="setSetupCigarette(20)">২০</button>
+              <button onclick="setSetupCigarette(50)">৫০</button>
+              <button onclick="setSetupCigarette(100)">১০০</button>
+            </div>
           </div>
         </div>
       </div>
-    </main>
-  </div>
-
-  <!-- লিডারবোর্ড মডাল -->
-  <div id="leaderboardModal" class="modal">
-    <div class="modal-content glass-card">
-      <div class="modal-header">
-        <h2>
-          <i class="fas fa-crown"></i>
-          চ্যাম্পিয়নশিপ লিডারবোর্ড
-        </h2>
-        <button class="modal-close" onclick="closeLeaderboard()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div id="podiumContainer" class="podium"></div>
-        <div id="leaderboardList" class="leaderboard-list"></div>
-      </div>
       <div class="modal-footer">
-        <button class="btn-success" onclick="newGame()">
-          <i class="fas fa-plus-circle"></i>
-          নতুন গেম
-        </button>
-        <button class="btn-secondary" onclick="closeLeaderboard()">
-          <i class="fas fa-arrow-left"></i>
-          ফিরুন
+        <button class="btn-neon" onclick="savePredictorSetup()">
+          <i class="fas fa-save"></i> সেভ করুন
         </button>
       </div>
     </div>
   </div>
 
-  <!-- হিস্ট্রি মডাল -->
-  <div id="historyModal" class="modal">
-    <div class="modal-content glass-card">
-      <div class="modal-header">
-        <h2>
-          <i class="fas fa-timeline"></i>
-          গেম হিস্ট্রি
-        </h2>
-        <button class="modal-close" onclick="closeHistory()">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div id="historyContainer" class="history-container"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- টোস্ট নোটিফিকেশন কন্টেইনার -->
+  <!-- টোস্ট কন্টেইনার -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <!-- কনফেটি ইফেক্ট (বিজয়ী ঘোষণার জন্য) -->
-  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
-
-  <!-- জাভাস্ক্রিপ্ট -->
   <script src="script.js"></script>
 </body>
-  </html>
+</html>
